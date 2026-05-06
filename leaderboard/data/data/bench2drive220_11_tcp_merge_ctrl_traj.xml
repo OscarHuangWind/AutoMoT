@@ -1,0 +1,751 @@
+<?xml version='1.0' encoding='utf-8'?>
+<routes><route id="27515" road_id="24" town="Town03">
+      <waypoints>
+         <position x="-71.0" y="173.7" z="0.0" />
+         <position x="-71.6" y="172.2" z="0.0" />
+         <position x="-72.2" y="170.6" z="0.0" />
+         <position x="-72.8" y="169.1" z="0.0" />
+         <position x="-73.2" y="167.5" z="0.0" />
+         <position x="-73.6" y="165.9" z="0.0" />
+         <position x="-73.9" y="164.3" z="0.0" />
+         <position x="-74.2" y="162.7" z="0.0" />
+         <position x="-74.4" y="161.1" z="0.0" />
+         <position x="-74.5" y="159.5" z="0.0" />
+         <position x="-74.6" y="157.8" z="0.0" />
+         <position x="-74.6" y="155.9" z="0.0" />
+         <position x="-74.6" y="153.9" z="0.0" />
+         <position x="-74.6" y="151.9" z="0.0" />
+         <position x="-54.4" y="135.2" z="0.0" />
+         <position x="-52.4" y="135.2" z="0.0" />
+         <position x="-50.4" y="135.1" z="0.0" />
+         <position x="-48.4" y="135.1" z="0.0" />
+         <position x="-46.4" y="135.0" z="0.0" />
+         <position x="-44.4" y="135.0" z="0.0" />
+         <position x="-42.4" y="134.9" z="0.0" />
+         <position x="-40.4" y="134.9" z="0.0" />
+         <position x="-38.4" y="134.8" z="0.0" />
+         <position x="-36.4" y="134.8" z="0.0" />
+         <position x="-34.4" y="134.7" z="0.0" />
+         <position x="-32.4" y="134.7" z="0.0" />
+         <position x="-30.4" y="134.7" z="0.0" />
+         <position x="-28.4" y="134.6" z="0.0" />
+         <position x="-26.4" y="134.6" z="0.0" />
+      </waypoints>
+      <scenarios>
+         <scenario name="PedestrianCrossing_1" type="PedestrianCrossing">
+            <trigger_point x="-73.6" y="165.9" yaw="257.2" z="0.0" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="5.0" fog_density="2.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="0" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+         <weather cloudiness="5.0" fog_density="2.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="100" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+      </weathers>
+   </route>
+   <route id="27529" road_id="30" town="Town04">
+      <waypoints>
+         <position x="291.3" y="-250.0" z="0.0" />
+         <position x="289.3" y="-249.9" z="0.0" />
+         <position x="287.3" y="-249.9" z="0.0" />
+         <position x="285.3" y="-249.9" z="0.0" />
+         <position x="283.3" y="-249.9" z="0.0" />
+         <position x="281.3" y="-249.9" z="0.0" />
+         <position x="279.3" y="-249.9" z="0.0" />
+         <position x="277.3" y="-249.9" z="0.0" />
+         <position x="275.3" y="-249.8" z="0.0" />
+         <position x="273.3" y="-249.8" z="0.0" />
+         <position x="271.3" y="-249.8" z="0.0" />
+         <position x="258.7" y="-263.3" z="0.0" />
+         <position x="258.7" y="-265.3" z="0.0" />
+         <position x="258.7" y="-267.3" z="0.0" />
+         <position x="258.7" y="-269.3" z="0.0" />
+         <position x="258.7" y="-271.3" z="0.0" />
+         <position x="258.7" y="-273.3" z="0.0" />
+         <position x="258.8" y="-275.3" z="0.0" />
+         <position x="258.8" y="-277.3" z="0.0" />
+         <position x="258.8" y="-279.3" z="0.0" />
+         <position x="258.8" y="-281.3" z="0.0" />
+         <position x="258.8" y="-283.3" z="0.0" />
+         <position x="258.8" y="-285.3" z="0.0" />
+         <position x="258.8" y="-287.3" z="0.0" />
+         <position x="258.8" y="-289.3" z="0.0" />
+         <position x="258.8" y="-291.3" z="0.0" />
+      </waypoints>
+      <scenarios>
+         <scenario name="PedestrianCrossing_1" type="PedestrianCrossing">
+            <trigger_point x="286.3" y="-249.9" yaw="179.6" z="0.0" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="80.0" fog_density="60.0" precipitation="60.0" precipitation_deposits="60.0" route_percentage="0" sun_altitude_angle="-90.0" sun_azimuth_angle="-1.0" wetness="80.0" wind_intensity="60.0" />
+         <weather cloudiness="80.0" fog_density="60.0" precipitation="60.0" precipitation_deposits="60.0" route_percentage="100" sun_altitude_angle="-90.0" sun_azimuth_angle="-1.0" wetness="80.0" wind_intensity="60.0" />
+      </weathers>
+   </route>
+   <route id="27532" road_id="406" town="Town11">
+      <waypoints>
+         <position x="-1840.9" y="-10140.1" z="274.9" />
+         <position x="-1838.9" y="-10140.4" z="274.9" />
+         <position x="-1836.9" y="-10140.8" z="274.9" />
+         <position x="-1835.0" y="-10141.1" z="274.9" />
+         <position x="-1833.0" y="-10141.5" z="274.9" />
+         <position x="-1831.0" y="-10141.9" z="274.9" />
+         <position x="-1829.1" y="-10142.2" z="274.9" />
+         <position x="-1827.1" y="-10142.6" z="274.9" />
+         <position x="-1825.1" y="-10143.0" z="274.9" />
+         <position x="-1823.2" y="-10143.4" z="274.9" />
+         <position x="-1821.2" y="-10143.8" z="274.9" />
+         <position x="-1819.2" y="-10144.3" z="275.0" />
+         <position x="-1804.5" y="-10135.5" z="274.9" />
+         <position x="-1804.1" y="-10133.5" z="274.8" />
+         <position x="-1803.6" y="-10131.6" z="274.8" />
+         <position x="-1803.1" y="-10129.7" z="274.8" />
+         <position x="-1802.6" y="-10127.7" z="274.8" />
+         <position x="-1802.1" y="-10125.8" z="274.8" />
+         <position x="-1801.7" y="-10123.8" z="274.8" />
+         <position x="-1801.2" y="-10121.9" z="274.8" />
+         <position x="-1800.7" y="-10120.0" z="274.8" />
+         <position x="-1800.2" y="-10118.0" z="274.8" />
+         <position x="-1799.7" y="-10116.1" z="274.8" />
+         <position x="-1799.2" y="-10114.1" z="274.7" />
+         <position x="-1798.8" y="-10112.2" z="274.7" />
+         <position x="-1798.3" y="-10110.2" z="274.7" />
+         <position x="-1797.8" y="-10108.3" z="274.7" />
+      </waypoints>
+      <scenarios>
+         <scenario name="BlockedIntersection_1" type="BlockedIntersection">
+            <trigger_point x="-1837.9" y="-10140.6" yaw="350.0" z="274.9" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="5.0" fog_density="2.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="0" sun_altitude_angle="90.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+         <weather cloudiness="5.0" fog_density="2.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="100" sun_altitude_angle="90.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+      </weathers>
+   </route>
+   <route id="27582" road_id="414" town="Town11">
+      <waypoints>
+         <position x="6739.0" y="-1281.5" z="58.6" />
+         <position x="6738.1" y="-1279.7" z="58.5" />
+         <position x="6737.1" y="-1278.0" z="58.5" />
+         <position x="6736.2" y="-1276.2" z="58.4" />
+         <position x="6735.2" y="-1274.4" z="58.4" />
+         <position x="6734.3" y="-1272.7" z="58.4" />
+         <position x="6733.3" y="-1270.9" z="58.3" />
+         <position x="6732.4" y="-1269.2" z="58.3" />
+         <position x="6731.4" y="-1267.4" z="58.2" />
+         <position x="6730.4" y="-1265.7" z="58.2" />
+         <position x="6729.5" y="-1263.9" z="58.1" />
+         <position x="6728.5" y="-1262.2" z="58.1" />
+         <position x="6712.3" y="-1257.2" z="57.4" />
+         <position x="6710.5" y="-1258.2" z="57.4" />
+         <position x="6708.8" y="-1259.1" z="57.4" />
+         <position x="6707.0" y="-1260.1" z="57.4" />
+         <position x="6705.2" y="-1261.0" z="57.3" />
+         <position x="6703.4" y="-1261.9" z="57.3" />
+         <position x="6701.6" y="-1262.8" z="57.2" />
+         <position x="6699.9" y="-1263.7" z="57.2" />
+         <position x="6698.1" y="-1264.6" z="57.2" />
+         <position x="6696.3" y="-1265.5" z="57.1" />
+         <position x="6694.5" y="-1266.4" z="57.1" />
+         <position x="6692.6" y="-1267.3" z="57.0" />
+         <position x="6690.8" y="-1268.2" z="57.0" />
+         <position x="6689.0" y="-1269.0" z="56.9" />
+      </waypoints>
+      <scenarios>
+         <scenario name="PedestrianCrossing_1" type="PedestrianCrossing">
+            <trigger_point x="6736.2" y="-1276.2" yaw="118.6" z="58.4" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="80.0" fog_density="3.0" precipitation="0.0" precipitation_deposits="50.0" route_percentage="0" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="20.0" wind_intensity="10.0" />
+         <weather cloudiness="80.0" fog_density="3.0" precipitation="0.0" precipitation_deposits="50.0" route_percentage="100" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="20.0" wind_intensity="10.0" />
+      </weathers>
+   </route>
+   <route id="28035" road_id="24" town="Town01">
+      <waypoints>
+         <position x="177.7" y="326.6" z="0.0" />
+         <position x="175.7" y="326.6" z="0.0" />
+         <position x="173.7" y="326.6" z="0.0" />
+         <position x="171.7" y="326.6" z="0.0" />
+         <position x="169.7" y="326.6" z="0.0" />
+         <position x="167.7" y="326.6" z="0.0" />
+         <position x="165.7" y="326.6" z="0.0" />
+         <position x="163.7" y="326.6" z="0.0" />
+         <position x="161.7" y="326.6" z="0.0" />
+         <position x="159.7" y="326.6" z="0.0" />
+         <position x="157.7" y="326.6" z="0.0" />
+         <position x="92.4" y="312.1" z="0.0" />
+         <position x="92.4" y="310.1" z="0.0" />
+         <position x="92.4" y="308.1" z="0.0" />
+         <position x="92.4" y="306.1" z="0.0" />
+         <position x="92.4" y="304.1" z="0.0" />
+         <position x="92.4" y="302.1" z="0.0" />
+         <position x="92.4" y="300.1" z="0.0" />
+         <position x="92.4" y="298.1" z="0.0" />
+         <position x="92.4" y="296.1" z="0.0" />
+         <position x="92.4" y="294.1" z="0.0" />
+         <position x="92.4" y="292.1" z="0.0" />
+         <position x="92.4" y="290.1" z="0.0" />
+         <position x="92.4" y="288.1" z="0.0" />
+         <position x="92.4" y="286.1" z="0.0" />
+      </waypoints>
+      <scenarios>
+         <scenario name="T_Junction_1" type="T_Junction">
+            <trigger_point x="152.7" y="326.6" yaw="180.0" z="0.0" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="5.0" fog_density="2.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="0" sun_altitude_angle="15.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+         <weather cloudiness="5.0" fog_density="2.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="100" sun_altitude_angle="15.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+      </weathers>
+   </route>
+   <route id="28048" road_id="11" town="Town02">
+      <waypoints>
+         <position x="41.9" y="200.2" z="0.0" />
+         <position x="41.9" y="202.2" z="0.0" />
+         <position x="41.9" y="204.2" z="0.0" />
+         <position x="41.9" y="206.2" z="0.0" />
+         <position x="41.9" y="208.2" z="0.0" />
+         <position x="41.9" y="210.2" z="0.0" />
+         <position x="41.9" y="212.2" z="0.0" />
+         <position x="41.9" y="214.2" z="0.0" />
+         <position x="41.9" y="216.2" z="0.0" />
+         <position x="41.9" y="218.2" z="0.0" />
+         <position x="41.9" y="220.2" z="0.0" />
+         <position x="41.9" y="222.2" z="0.0" />
+         <position x="59.8" y="240.9" z="0.0" />
+         <position x="61.8" y="240.9" z="0.0" />
+         <position x="63.8" y="240.9" z="0.0" />
+         <position x="65.8" y="240.9" z="0.0" />
+         <position x="67.8" y="240.9" z="0.0" />
+         <position x="69.8" y="240.9" z="0.0" />
+         <position x="71.8" y="240.9" z="0.0" />
+         <position x="73.8" y="240.9" z="0.0" />
+         <position x="75.8" y="240.9" z="0.0" />
+         <position x="77.8" y="240.9" z="0.0" />
+         <position x="79.8" y="240.9" z="0.0" />
+         <position x="81.8" y="240.9" z="0.0" />
+         <position x="83.8" y="240.9" z="0.0" />
+         <position x="85.8" y="240.9" z="0.0" />
+         <position x="87.8" y="240.9" z="0.0" />
+         <position x="89.8" y="240.9" z="0.0" />
+      </waypoints>
+      <scenarios>
+         <scenario name="T_Junction_1" type="T_Junction">
+            <trigger_point x="41.9" y="227.2" yaw="90.0" z="0.0" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="100.0" fog_density="10.0" precipitation="50.0" precipitation_deposits="100.0" route_percentage="0" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="80.0" wind_intensity="80.0" />
+         <weather cloudiness="100.0" fog_density="10.0" precipitation="50.0" precipitation_deposits="100.0" route_percentage="100" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="80.0" wind_intensity="80.0" />
+      </weathers>
+   </route>
+   <route id="28087" road_id="30" town="Town04">
+      <waypoints>
+         <position x="217.8" y="-246.0" z="0.0" />
+         <position x="219.8" y="-246.0" z="0.0" />
+         <position x="221.8" y="-246.0" z="0.0" />
+         <position x="223.8" y="-246.0" z="0.0" />
+         <position x="225.8" y="-246.0" z="0.0" />
+         <position x="227.8" y="-246.0" z="0.0" />
+         <position x="229.8" y="-246.0" z="0.0" />
+         <position x="231.8" y="-246.0" z="0.0" />
+         <position x="233.8" y="-246.1" z="0.0" />
+         <position x="235.8" y="-246.1" z="0.0" />
+         <position x="237.8" y="-246.1" z="0.0" />
+         <position x="239.8" y="-246.1" z="0.0" />
+         <position x="258.7" y="-262.7" z="0.0" />
+         <position x="258.7" y="-264.7" z="0.0" />
+         <position x="258.7" y="-266.7" z="0.0" />
+         <position x="258.7" y="-268.7" z="0.0" />
+         <position x="258.7" y="-270.7" z="0.0" />
+         <position x="258.7" y="-272.7" z="0.0" />
+         <position x="258.8" y="-274.7" z="0.0" />
+         <position x="258.8" y="-276.7" z="0.0" />
+         <position x="258.8" y="-278.7" z="0.0" />
+         <position x="258.8" y="-280.7" z="0.0" />
+         <position x="258.8" y="-282.7" z="0.0" />
+         <position x="258.8" y="-284.7" z="0.0" />
+         <position x="258.8" y="-286.7" z="0.0" />
+         <position x="258.8" y="-288.7" z="0.0" />
+         <position x="258.8" y="-290.7" z="0.0" />
+      </waypoints>
+      <scenarios>
+         <scenario name="NonSignalizedJunctionLeftTurnEnterFlow_1" type="NonSignalizedJunctionLeftTurnEnterFlow">
+            <trigger_point x="222.8" y="-246.0" yaw="359.6" z="0.0" />
+            <flow_speed value="10" />
+            <source_dist_interval from="19" to="26" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="100.0" fog_density="7.0" precipitation="100.0" precipitation_deposits="90.0" route_percentage="0" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="100.0" />
+         <weather cloudiness="100.0" fog_density="7.0" precipitation="100.0" precipitation_deposits="90.0" route_percentage="100" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="100.0" />
+      </weathers>
+   </route>
+   <route id="28093" road_id="26" town="Town04">
+      <waypoints>
+         <position x="255.3" y="-287.1" z="0.0" />
+         <position x="255.3" y="-285.1" z="0.0" />
+         <position x="255.3" y="-283.1" z="0.0" />
+         <position x="255.3" y="-281.1" z="0.0" />
+         <position x="255.3" y="-279.1" z="0.0" />
+         <position x="255.3" y="-277.1" z="0.0" />
+         <position x="255.3" y="-275.1" z="0.0" />
+         <position x="255.2" y="-273.1" z="0.0" />
+         <position x="255.2" y="-271.1" z="0.0" />
+         <position x="255.2" y="-269.1" z="0.0" />
+         <position x="255.2" y="-267.1" z="0.0" />
+         <position x="255.2" y="-265.1" z="0.0" />
+         <position x="255.2" y="-263.1" z="0.0" />
+         <position x="271.6" y="-246.3" z="0.0" />
+         <position x="273.6" y="-246.3" z="0.0" />
+         <position x="275.6" y="-246.3" z="0.0" />
+         <position x="277.6" y="-246.4" z="0.0" />
+         <position x="279.6" y="-246.4" z="0.0" />
+         <position x="281.6" y="-246.4" z="0.0" />
+         <position x="283.6" y="-246.4" z="0.0" />
+         <position x="285.6" y="-246.4" z="0.0" />
+         <position x="287.6" y="-246.4" z="0.0" />
+         <position x="289.6" y="-246.4" z="0.0" />
+         <position x="291.6" y="-246.5" z="0.0" />
+         <position x="293.6" y="-246.5" z="0.0" />
+         <position x="295.6" y="-246.5" z="0.0" />
+         <position x="297.6" y="-246.5" z="0.0" />
+         <position x="299.6" y="-246.5" z="0.0" />
+         <position x="301.6" y="-246.5" z="0.0" />
+      </waypoints>
+      <scenarios>
+         <scenario name="NonSignalizedJunctionLeftTurnEnterFlow_1" type="NonSignalizedJunctionLeftTurnEnterFlow">
+            <trigger_point x="255.3" y="-279.1" yaw="90.2" z="0.0" />
+            <flow_speed value="9" />
+            <source_dist_interval from="16" to="27" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="100.0" fog_density="10.0" precipitation="100.0" precipitation_deposits="50.0" route_percentage="0" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="50.0" wind_intensity="100.0" />
+         <weather cloudiness="100.0" fog_density="10.0" precipitation="100.0" precipitation_deposits="50.0" route_percentage="100" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="50.0" wind_intensity="100.0" />
+      </weathers>
+   </route>
+   <route id="28099" road_id="51" town="Town04">
+      <waypoints>
+         <position x="204.3" y="-267.4" z="0.0" />
+         <position x="204.4" y="-269.4" z="0.0" />
+         <position x="204.4" y="-271.4" z="0.0" />
+         <position x="204.5" y="-273.4" z="0.0" />
+         <position x="204.5" y="-275.4" z="0.0" />
+         <position x="204.6" y="-277.4" z="0.0" />
+         <position x="204.6" y="-279.4" z="0.0" />
+         <position x="204.7" y="-281.4" z="0.0" />
+         <position x="204.7" y="-283.4" z="0.0" />
+         <position x="204.7" y="-285.4" z="0.0" />
+         <position x="204.8" y="-287.4" z="0.0" />
+         <position x="204.8" y="-289.4" z="0.0" />
+         <position x="204.9" y="-291.4" z="0.0" />
+         <position x="204.9" y="-293.4" z="0.0" />
+         <position x="185.5" y="-311.2" z="0.0" />
+         <position x="183.5" y="-311.2" z="0.0" />
+         <position x="181.5" y="-311.2" z="0.0" />
+         <position x="179.5" y="-311.2" z="0.0" />
+         <position x="177.5" y="-311.2" z="0.0" />
+         <position x="175.5" y="-311.2" z="0.0" />
+         <position x="173.5" y="-311.2" z="0.0" />
+         <position x="171.5" y="-311.2" z="0.0" />
+         <position x="169.5" y="-311.2" z="0.0" />
+         <position x="167.5" y="-311.2" z="0.0" />
+         <position x="165.5" y="-311.2" z="0.0" />
+         <position x="163.5" y="-311.2" z="0.0" />
+         <position x="161.4" y="-311.2" z="0.0" />
+         <position x="159.4" y="-311.2" z="0.0" />
+         <position x="157.4" y="-311.1" z="0.0" />
+      </waypoints>
+      <scenarios>
+         <scenario name="SignalizedJunctionLeftTurnEnterFlow_1" type="SignalizedJunctionLeftTurnEnterFlow">
+            <trigger_point x="204.5" y="-274.4" yaw="271.3" z="0.0" />
+            <flow_speed value="8" />
+            <source_dist_interval from="24" to="28" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="5.0" fog_density="60.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="0" sun_altitude_angle="-90.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+         <weather cloudiness="5.0" fog_density="60.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="100" sun_altitude_angle="-90.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+      </weathers>
+   </route>
+   <route id="28111" road_id="1" town="Town04">
+      <waypoints>
+         <position x="216.3" y="-307.8" z="0.0" />
+         <position x="218.3" y="-307.8" z="0.0" />
+         <position x="220.3" y="-307.8" z="0.0" />
+         <position x="222.3" y="-307.8" z="0.0" />
+         <position x="224.3" y="-307.7" z="0.0" />
+         <position x="226.3" y="-307.7" z="0.0" />
+         <position x="228.3" y="-307.7" z="0.0" />
+         <position x="230.3" y="-307.7" z="0.0" />
+         <position x="232.3" y="-307.7" z="0.0" />
+         <position x="234.3" y="-307.6" z="0.0" />
+         <position x="236.3" y="-307.6" z="0.0" />
+         <position x="238.3" y="-307.6" z="0.0" />
+         <position x="240.3" y="-307.6" z="0.0" />
+         <position x="242.3" y="-307.6" z="0.0" />
+         <position x="272.3" y="-307.3" z="0.0" />
+         <position x="274.3" y="-307.2" z="0.0" />
+         <position x="276.3" y="-307.2" z="0.0" />
+         <position x="278.3" y="-307.2" z="0.0" />
+         <position x="280.3" y="-307.2" z="0.0" />
+         <position x="282.3" y="-307.1" z="0.0" />
+         <position x="284.2" y="-307.1" z="0.0" />
+         <position x="286.0" y="-306.9" z="0.0" />
+         <position x="287.9" y="-306.6" z="0.0" />
+         <position x="289.7" y="-306.2" z="0.0" />
+         <position x="291.5" y="-305.6" z="0.0" />
+         <position x="293.2" y="-304.9" z="0.0" />
+         <position x="294.9" y="-304.1" z="0.0" />
+         <position x="296.5" y="-303.1" z="0.0" />
+         <position x="298.0" y="-302.0" z="0.0" />
+         <position x="299.5" y="-300.9" z="0.0" />
+         <position x="300.8" y="-299.6" z="0.0" />
+      </waypoints>
+      <scenarios>
+         <scenario name="T_Junction_1" type="T_Junction">
+            <trigger_point x="247.3" y="-307.5" yaw="0.6" z="0.0" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="70.0" fog_density="50.0" precipitation="60.0" precipitation_deposits="60.0" route_percentage="0" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="60.0" />
+         <weather cloudiness="70.0" fog_density="50.0" precipitation="60.0" precipitation_deposits="60.0" route_percentage="100" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="60.0" />
+      </weathers>
+   </route>
+   <route id="28154" road_id="5" town="Town10HD">
+      <waypoints>
+         <position x="49.8" y="134.1" z="0.0" />
+         <position x="47.8" y="134.1" z="0.0" />
+         <position x="45.8" y="134.1" z="0.0" />
+         <position x="43.8" y="134.1" z="0.0" />
+         <position x="41.8" y="134.1" z="0.0" />
+         <position x="39.8" y="134.1" z="0.0" />
+         <position x="37.8" y="134.1" z="0.0" />
+         <position x="35.8" y="134.1" z="0.0" />
+         <position x="33.8" y="134.0" z="0.0" />
+         <position x="31.8" y="134.0" z="0.0" />
+         <position x="29.8" y="134.0" z="0.0" />
+         <position x="27.8" y="134.0" z="0.0" />
+         <position x="-76.2" y="130.8" z="0.0" />
+         <position x="-78.0" y="130.1" z="0.0" />
+         <position x="-79.7" y="129.4" z="0.0" />
+         <position x="-81.4" y="128.5" z="0.0" />
+         <position x="-83.1" y="127.5" z="0.0" />
+         <position x="-84.7" y="126.5" z="0.0" />
+         <position x="-86.3" y="125.4" z="0.0" />
+         <position x="-87.8" y="124.2" z="0.0" />
+         <position x="-89.3" y="123.0" z="0.0" />
+         <position x="-90.7" y="121.7" z="0.0" />
+         <position x="-92.0" y="120.3" z="0.0" />
+         <position x="-93.2" y="118.8" z="0.0" />
+         <position x="-94.4" y="117.3" z="0.0" />
+         <position x="-95.6" y="115.8" z="0.0" />
+         <position x="-96.6" y="114.1" z="0.0" />
+         <position x="-97.7" y="112.5" z="0.0" />
+      </waypoints>
+      <scenarios>
+         <scenario name="T_Junction_1" type="T_Junction">
+            <trigger_point x="22.8" y="134.0" yaw="180.3" z="0.0" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="5.0" fog_density="10.0" precipitation="0.0" precipitation_deposits="50.0" route_percentage="0" sun_altitude_angle="15.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+         <weather cloudiness="5.0" fog_density="10.0" precipitation="0.0" precipitation_deposits="50.0" route_percentage="100" sun_altitude_angle="15.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+      </weathers>
+   </route>
+   <route id="28198" road_id="234" town="Town15">
+      <waypoints>
+         <position x="961.1" y="404.2" z="122.8" />
+         <position x="961.6" y="406.2" z="122.6" />
+         <position x="962.1" y="408.2" z="122.5" />
+         <position x="962.7" y="410.1" z="122.4" />
+         <position x="963.3" y="412.0" z="122.3" />
+         <position x="963.9" y="414.0" z="122.2" />
+         <position x="964.6" y="415.9" z="122.1" />
+         <position x="965.3" y="417.8" z="122.1" />
+         <position x="966.0" y="419.7" z="122.0" />
+         <position x="966.7" y="421.6" z="121.9" />
+         <position x="967.5" y="423.4" z="121.9" />
+         <position x="968.4" y="425.3" z="121.8" />
+         <position x="996.9" y="433.0" z="121.8" />
+         <position x="998.5" y="431.8" z="121.8" />
+         <position x="1000.1" y="430.6" z="121.9" />
+         <position x="1001.7" y="429.4" z="121.9" />
+         <position x="1003.3" y="428.1" z="121.9" />
+         <position x="1004.9" y="426.9" z="122.0" />
+         <position x="1006.4" y="425.7" z="122.1" />
+         <position x="1008.0" y="424.5" z="122.1" />
+         <position x="1009.6" y="423.2" z="122.2" />
+         <position x="1011.2" y="422.0" z="122.3" />
+         <position x="1012.8" y="420.8" z="122.4" />
+         <position x="1014.4" y="419.6" z="122.5" />
+         <position x="1015.9" y="418.4" z="122.6" />
+         <position x="1017.5" y="417.1" z="122.7" />
+      </waypoints>
+      <scenarios>
+         <scenario name="SignalizedJunctionLeftTurnEnterFlow_1" type="SignalizedJunctionLeftTurnEnterFlow">
+            <trigger_point x="961.9" y="407.2" yaw="74.9" z="122.6" />
+            <flow_speed value="10" />
+            <source_dist_interval from="16" to="25" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="60.0" fog_density="3.0" precipitation="60.0" precipitation_deposits="60.0" route_percentage="0" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="60.0" />
+         <weather cloudiness="60.0" fog_density="3.0" precipitation="60.0" precipitation_deposits="60.0" route_percentage="100" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="60.0" />
+      </weathers>
+   </route>
+   <route id="28210" road_id="23" town="Town12">
+      <waypoints>
+         <position x="2385.6" y="2372.7" z="365.7" />
+         <position x="2385.7" y="2374.7" z="365.8" />
+         <position x="2385.7" y="2376.7" z="365.8" />
+         <position x="2385.7" y="2378.7" z="365.9" />
+         <position x="2385.7" y="2380.7" z="365.9" />
+         <position x="2385.7" y="2382.7" z="366.0" />
+         <position x="2385.7" y="2384.7" z="366.0" />
+         <position x="2385.7" y="2386.7" z="366.1" />
+         <position x="2385.7" y="2388.7" z="366.1" />
+         <position x="2385.7" y="2390.7" z="366.2" />
+         <position x="2385.7" y="2392.7" z="366.2" />
+         <position x="2385.7" y="2394.7" z="366.3" />
+         <position x="2403.7" y="2411.7" z="366.4" />
+         <position x="2405.7" y="2411.7" z="366.4" />
+         <position x="2407.7" y="2411.7" z="366.4" />
+         <position x="2409.7" y="2411.7" z="366.4" />
+         <position x="2411.7" y="2411.7" z="366.3" />
+         <position x="2413.7" y="2411.7" z="366.3" />
+         <position x="2415.7" y="2411.7" z="366.3" />
+         <position x="2417.7" y="2411.7" z="366.2" />
+         <position x="2419.7" y="2411.7" z="366.2" />
+         <position x="2421.7" y="2411.7" z="366.2" />
+         <position x="2423.7" y="2411.7" z="366.2" />
+         <position x="2425.7" y="2411.7" z="366.1" />
+         <position x="2427.7" y="2411.7" z="366.1" />
+         <position x="2429.7" y="2411.7" z="366.1" />
+         <position x="2431.7" y="2411.7" z="366.0" />
+         <position x="2433.7" y="2411.7" z="366.0" />
+      </waypoints>
+      <scenarios>
+         <scenario name="NonSignalizedJunctionLeftTurnEnterFlow_1" type="NonSignalizedJunctionLeftTurnEnterFlow">
+            <trigger_point x="2385.7" y="2376.7" yaw="89.7" z="365.8" />
+            <flow_speed value="9" />
+            <source_dist_interval from="16" to="30" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="40.0" fog_density="2.0" precipitation="0.0" precipitation_deposits="50.0" route_percentage="0" sun_altitude_angle="15.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+         <weather cloudiness="40.0" fog_density="2.0" precipitation="0.0" precipitation_deposits="50.0" route_percentage="100" sun_altitude_angle="15.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+      </weathers>
+   </route>
+   <route id="28219" road_id="648" town="Town12">
+      <waypoints>
+         <position x="2773.9" y="1870.2" z="348.4" />
+         <position x="2773.9" y="1868.2" z="348.3" />
+         <position x="2773.9" y="1866.2" z="348.3" />
+         <position x="2773.9" y="1864.2" z="348.2" />
+         <position x="2773.9" y="1862.2" z="348.2" />
+         <position x="2773.9" y="1860.2" z="348.1" />
+         <position x="2773.9" y="1858.2" z="348.0" />
+         <position x="2773.9" y="1856.2" z="348.0" />
+         <position x="2773.9" y="1854.2" z="347.9" />
+         <position x="2773.9" y="1852.2" z="347.9" />
+         <position x="2773.9" y="1850.2" z="347.8" />
+         <position x="2773.9" y="1848.2" z="347.8" />
+         <position x="2773.9" y="1846.2" z="347.7" />
+         <position x="2755.9" y="1829.3" z="347.7" />
+         <position x="2753.9" y="1829.3" z="347.7" />
+         <position x="2751.9" y="1829.3" z="347.8" />
+         <position x="2749.9" y="1829.3" z="347.8" />
+         <position x="2747.9" y="1829.3" z="347.9" />
+         <position x="2745.9" y="1829.4" z="347.9" />
+         <position x="2743.9" y="1829.4" z="348.0" />
+         <position x="2741.9" y="1829.4" z="348.1" />
+         <position x="2739.9" y="1829.4" z="348.1" />
+         <position x="2737.9" y="1829.4" z="348.2" />
+         <position x="2735.9" y="1829.4" z="348.3" />
+         <position x="2733.9" y="1829.4" z="348.4" />
+         <position x="2731.9" y="1829.4" z="348.4" />
+         <position x="2729.9" y="1829.5" z="348.5" />
+         <position x="2727.9" y="1829.5" z="348.6" />
+      </waypoints>
+      <scenarios>
+         <scenario name="NonSignalizedJunctionLeftTurnEnterFlow_1" type="NonSignalizedJunctionLeftTurnEnterFlow">
+            <trigger_point x="2773.9" y="1862.2" yaw="269.8" z="348.2" />
+            <flow_speed value="8" />
+            <source_dist_interval from="17" to="27" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="5.0" fog_density="2.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="0" sun_altitude_angle="15.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+         <weather cloudiness="5.0" fog_density="2.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="100" sun_altitude_angle="15.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+      </weathers>
+   </route>
+   <route id="28229" road_id="270" town="Town12">
+      <waypoints>
+         <position x="2374.2" y="-137.8" z="335.7" />
+         <position x="2374.2" y="-135.8" z="335.8" />
+         <position x="2374.3" y="-133.8" z="335.8" />
+         <position x="2374.4" y="-131.8" z="335.8" />
+         <position x="2374.5" y="-129.8" z="335.8" />
+         <position x="2374.5" y="-127.8" z="335.9" />
+         <position x="2374.6" y="-125.8" z="335.9" />
+         <position x="2374.7" y="-123.8" z="335.9" />
+         <position x="2374.7" y="-121.8" z="335.9" />
+         <position x="2374.8" y="-119.8" z="335.9" />
+         <position x="2374.9" y="-117.8" z="335.9" />
+         <position x="2374.9" y="-115.8" z="336.0" />
+         <position x="2398.7" y="-93.1" z="335.4" />
+         <position x="2400.7" y="-93.1" z="335.3" />
+         <position x="2402.7" y="-93.1" z="335.3" />
+         <position x="2404.7" y="-93.0" z="335.2" />
+         <position x="2406.7" y="-93.0" z="335.1" />
+         <position x="2408.7" y="-93.0" z="335.1" />
+         <position x="2410.7" y="-93.0" z="335.0" />
+         <position x="2412.7" y="-93.0" z="334.9" />
+         <position x="2414.7" y="-93.0" z="334.9" />
+         <position x="2416.7" y="-93.0" z="334.8" />
+         <position x="2418.7" y="-93.0" z="334.8" />
+         <position x="2420.7" y="-92.9" z="334.7" />
+         <position x="2422.7" y="-92.9" z="334.6" />
+         <position x="2424.7" y="-92.9" z="334.6" />
+         <position x="2426.7" y="-92.9" z="334.5" />
+      </waypoints>
+      <scenarios>
+         <scenario name="NonSignalizedJunctionLeftTurnEnterFlow_1" type="NonSignalizedJunctionLeftTurnEnterFlow">
+            <trigger_point x="2374.3" y="-133.8" yaw="88.0" z="335.8" />
+            <flow_speed value="8" />
+            <source_dist_interval from="15" to="26" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="5.0" fog_density="50.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="0" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+         <weather cloudiness="5.0" fog_density="50.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="100" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+      </weathers>
+   </route>
+   <route id="28241" road_id="604" town="Town12">
+      <waypoints>
+         <position x="2755.9" y="4662.8" z="364.8" />
+         <position x="2755.6" y="4664.8" z="364.8" />
+         <position x="2755.3" y="4666.7" z="364.8" />
+         <position x="2754.9" y="4668.7" z="364.9" />
+         <position x="2754.6" y="4670.7" z="364.9" />
+         <position x="2754.3" y="4672.7" z="364.9" />
+         <position x="2754.0" y="4674.6" z="364.9" />
+         <position x="2753.6" y="4676.6" z="365.0" />
+         <position x="2753.3" y="4678.6" z="365.0" />
+         <position x="2753.0" y="4680.6" z="365.0" />
+         <position x="2752.6" y="4682.5" z="365.0" />
+         <position x="2752.3" y="4684.5" z="365.1" />
+         <position x="2767.1" y="4702.3" z="365.3" />
+         <position x="2769.1" y="4702.6" z="365.3" />
+         <position x="2771.1" y="4703.0" z="365.3" />
+         <position x="2773.1" y="4703.3" z="365.4" />
+         <position x="2775.0" y="4703.6" z="365.4" />
+         <position x="2777.0" y="4703.9" z="365.4" />
+         <position x="2779.0" y="4704.2" z="365.4" />
+         <position x="2781.0" y="4704.6" z="365.4" />
+         <position x="2782.9" y="4704.9" z="365.4" />
+         <position x="2784.9" y="4705.2" z="365.4" />
+         <position x="2786.9" y="4705.5" z="365.5" />
+         <position x="2788.9" y="4705.8" z="365.5" />
+         <position x="2790.8" y="4706.2" z="365.5" />
+         <position x="2792.8" y="4706.5" z="365.5" />
+         <position x="2794.8" y="4706.8" z="365.5" />
+      </waypoints>
+      <scenarios>
+         <scenario name="SignalizedJunctionLeftTurnEnterFlow_1" type="SignalizedJunctionLeftTurnEnterFlow">
+            <trigger_point x="2754.9" y="4668.7" yaw="99.4" z="364.9" />
+            <flow_speed value="8" />
+            <source_dist_interval from="21" to="27" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="5.0" fog_density="2.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="0" sun_altitude_angle="90.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+         <weather cloudiness="5.0" fog_density="2.0" precipitation="0.0" precipitation_deposits="0.0" route_percentage="100" sun_altitude_angle="90.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+      </weathers>
+   </route>
+   <route id="28243" road_id="630" town="Town12">
+      <waypoints>
+         <position x="1322.1" y="4995.9" z="370.9" />
+         <position x="1324.1" y="4995.9" z="370.9" />
+         <position x="1326.1" y="4995.9" z="370.9" />
+         <position x="1328.1" y="4995.9" z="370.9" />
+         <position x="1330.1" y="4995.9" z="370.9" />
+         <position x="1332.1" y="4995.9" z="370.9" />
+         <position x="1334.1" y="4995.9" z="370.9" />
+         <position x="1336.1" y="4995.9" z="370.9" />
+         <position x="1338.1" y="4995.9" z="370.9" />
+         <position x="1340.1" y="4995.9" z="370.9" />
+         <position x="1342.1" y="4995.9" z="370.9" />
+         <position x="1344.1" y="4995.9" z="370.9" />
+         <position x="1346.1" y="4995.9" z="370.9" />
+         <position x="1364.3" y="4974.1" z="370.8" />
+         <position x="1364.3" y="4972.1" z="370.8" />
+         <position x="1364.3" y="4970.1" z="370.8" />
+         <position x="1364.3" y="4968.1" z="370.8" />
+         <position x="1364.3" y="4966.1" z="370.8" />
+         <position x="1364.3" y="4964.1" z="370.8" />
+         <position x="1364.3" y="4962.1" z="370.8" />
+         <position x="1364.3" y="4960.1" z="370.8" />
+         <position x="1364.3" y="4958.1" z="370.8" />
+         <position x="1364.3" y="4956.1" z="370.8" />
+         <position x="1364.3" y="4954.1" z="370.8" />
+         <position x="1364.3" y="4952.1" z="370.8" />
+         <position x="1364.3" y="4950.1" z="370.8" />
+         <position x="1364.3" y="4948.1" z="370.8" />
+      </waypoints>
+      <scenarios>
+         <scenario name="SignalizedJunctionLeftTurnEnterFlow_1" type="SignalizedJunctionLeftTurnEnterFlow">
+            <trigger_point x="1331.1" y="4995.9" yaw="-0.1" z="370.9" />
+            <flow_speed value="10" />
+            <source_dist_interval from="23" to="30" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="20.0" fog_density="3.0" precipitation="30.0" precipitation_deposits="50.0" route_percentage="0" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="30.0" />
+         <weather cloudiness="20.0" fog_density="3.0" precipitation="30.0" precipitation_deposits="50.0" route_percentage="100" sun_altitude_angle="45.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="30.0" />
+      </weathers>
+   </route>
+   <route id="28330" road_id="588" town="Town12">
+      <waypoints>
+         <position x="2421.6" y="-96.4" z="334.7" />
+         <position x="2419.6" y="-96.4" z="334.7" />
+         <position x="2417.6" y="-96.5" z="334.8" />
+         <position x="2415.6" y="-96.5" z="334.9" />
+         <position x="2413.6" y="-96.5" z="334.9" />
+         <position x="2411.6" y="-96.5" z="335.0" />
+         <position x="2409.6" y="-96.5" z="335.1" />
+         <position x="2407.6" y="-96.5" z="335.1" />
+         <position x="2405.6" y="-96.5" z="335.2" />
+         <position x="2403.6" y="-96.6" z="335.3" />
+         <position x="2401.6" y="-96.6" z="335.3" />
+         <position x="2399.6" y="-96.6" z="335.4" />
+         <position x="2376.9" y="-73.7" z="335.9" />
+         <position x="2377.1" y="-71.7" z="335.9" />
+         <position x="2377.2" y="-69.7" z="335.9" />
+         <position x="2377.3" y="-67.7" z="335.9" />
+         <position x="2377.4" y="-65.7" z="335.9" />
+         <position x="2377.5" y="-63.7" z="335.8" />
+         <position x="2377.6" y="-61.7" z="335.8" />
+         <position x="2377.7" y="-59.8" z="335.8" />
+         <position x="2377.8" y="-57.8" z="335.8" />
+         <position x="2378.0" y="-55.8" z="335.8" />
+         <position x="2378.1" y="-53.8" z="335.7" />
+         <position x="2378.2" y="-51.8" z="335.7" />
+         <position x="2378.3" y="-49.8" z="335.7" />
+         <position x="2378.4" y="-47.8" z="335.6" />
+         <position x="2378.5" y="-45.8" z="335.6" />
+      </waypoints>
+      <scenarios>
+         <scenario name="SignalizedJunctionLeftTurnEnterFlow_1" type="SignalizedJunctionLeftTurnEnterFlow">
+            <trigger_point x="2415.6" y="-96.5" yaw="-179.6" z="334.9" />
+            <flow_speed value="10" />
+            <source_dist_interval from="22" to="25" />
+         </scenario>
+      </scenarios>
+      <weathers>
+         <weather cloudiness="5.0" fog_density="10.0" precipitation="0.0" precipitation_deposits="50.0" route_percentage="0" sun_altitude_angle="15.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+         <weather cloudiness="5.0" fog_density="10.0" precipitation="0.0" precipitation_deposits="50.0" route_percentage="100" sun_altitude_angle="15.0" sun_azimuth_angle="-1.0" wetness="0.0" wind_intensity="10.0" />
+      </weathers>
+   </route>
+   </routes>

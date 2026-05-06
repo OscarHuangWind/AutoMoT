@@ -1,0 +1,19 @@
+vlm_sft_senna:
+  dataset_names:
+    - pdm_lite_meta_action
+    - nuscenes_count
+  image_transform_args:
+    image_stride: 14
+    max_image_size: 980
+    min_image_size: 378
+    max_pixels: 2_007_040
+  frame_sampler_args:
+    max_num_frames: 12
+    min_num_frames: 8
+  is_mandatory: true
+  shuffle_lines: true
+  shuffle_seed: 0
+  num_used_data:
+    - 16384    # 对应 pdm_lite_meta_action
+    - 12555    # 对应 nuscenes_count
+  weight: 1
