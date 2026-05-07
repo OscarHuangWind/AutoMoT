@@ -46,7 +46,7 @@
 
 ## Method Overview <a name="method-overview"></a>
 
-AutoMoT uses an **Asynchronous Mixture-of-Transformers** design: a slow Understanding Expert (4B) produces chain-of-thought scene descriptions at low frequency, while a fast Action Expert (1.6B) runs at high frequency to decode temporal decisions and spatial waypoints. KV-cache bridging connects the two experts so action inference costs only a single forward pass per step.
+AutoMoT uses an **Asynchronous Mixture-of-Transformers** design: a slow Understanding Expert (4B) reasoning at low frequency, while a fast Action Expert (1.6B) runs at high frequency to decode temporal decisions and spatial waypoints. KV-cache bridging connects the two experts so action inference costs only a single forward pass per step.
 
 ---
 
