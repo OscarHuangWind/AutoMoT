@@ -1,5 +1,5 @@
 
-# AutoMoT(ICML 2026)
+# AutoMoT: A Unified Vision-Language-Action Model with Asynchronous Mixture-of-Transformers for End-to-End Autonomous Driving(ICML 2026) 
 
 <p align="center">
   <a href="https://huggingface.co/HqH1111/automot_checkpoint">
