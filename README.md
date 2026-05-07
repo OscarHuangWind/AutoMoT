@@ -179,7 +179,7 @@ Bench2Drive 220-route closed-loop evaluation (DS↑ / SR↑):
   <img src="./assets/b2d.png" alt="Bench2Drive Results" width="85%">
 </p>
 
-**AutoMoT achieves DS=87.34 / SR=70.00**, ranking 1st among all methods on Bench2Drive.
+**AutoMoT achieves DS=87.34 / SR=70.00**
 
 ---
 
