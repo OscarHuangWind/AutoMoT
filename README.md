@@ -1,5 +1,5 @@
 
-# AutoMoT — Open-Source Bench2Drive Inference
+# AutoMoT(ICML 2026)
 
 <p align="center">
   <a href="https://huggingface.co/HqH1111/automot_checkpoint">
