@@ -18,8 +18,6 @@
   &nbsp;
   <a href="https://automot-website.github.io/"><img src="https://img.shields.io/badge/Project_Page-AutoMoT-blueviolet?style=flat-square&logo=googlechrome&logoColor=white" alt="Project Page"></a>
   &nbsp;
-  <a href="https://github.com/OscarHuangWind/AutoMoT"><img src="https://img.shields.io/badge/Code-AutoMoT-blue?style=flat-square&logo=github" alt="Code"></a>
-  &nbsp;
   <a href="https://huggingface.co/Oscar-Huang/AutoMoT"><img src="https://img.shields.io/badge/%F0%9F%A4%97_Weights-AutoMoT-yellow?style=flat-square" alt="Weights"></a>
   &nbsp;
   <a href="https://huggingface.co/datasets/Oscar-Huang/NuSync"><img src="https://img.shields.io/badge/%F0%9F%A4%97_Datasets-NuSync-orange?style=flat-square" alt="Datasets"></a>
@@ -46,7 +44,7 @@
 
 ## Method Overview <a name="method-overview"></a>
 
-AutoMoT uses an **Asynchronous Mixture-of-Transformers** design: a slow Understanding Expert (4B) reasoning at low frequency, while a fast Action Expert (1.6B) runs at high frequency to decode temporal decisions and spatial waypoints. KV-cache bridging connects the two experts so action inference costs only a single forward pass per step.
+AutoMoT uses an **Asynchronous Mixture-of-Transformers** design: a slow Understanding Expert (4B) performs low-frequency reasoning, while a fast Action Expert (1.6B) runs at high frequency to decode 3-second decisions and spatial-temporal waypoints via KV-cache bridging.
 
 ---
 
@@ -84,8 +82,6 @@ Bench2Drive_opensource/
 ---
 
 ## Environment Setup <a name="environment-setup"></a>
-
-A single Conda environment (`automot`) is used for both the CARLA harness and model inference.
 
 ### 1. CARLA 0.9.15
 
@@ -179,11 +175,9 @@ This script:
 
 Bench2Drive 220-route closed-loop evaluation (DS↑ / SR↑):
 
-<p align="center">
-  <a href="https://huggingface.co/HqH1111/automot_checkpoint">
-    <img src="./assets/b2d_results.jpg" alt="Bench2Drive Results" width="85%">
-  </a>
-</p>
+| Method | DS↑ | SR↑ |
+|--------|-----|-----|
+| AutoMoT | 87.34 | 70.00 |
 
 **AutoMoT achieves DS=87.34 / SR=70.00**, ranking 1st among all methods on Bench2Drive.
 
