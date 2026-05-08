@@ -17,9 +17,7 @@
   <a href="https://huggingface.co/datasets/Oscar-Huang/NuSync"><img src="https://img.shields.io/badge/%F0%9F%A4%97_Datasets-NuSync-orange?style=flat-square" alt="Datasets"></a>
 </p>
 
-<p align="center">
-  <video src="./assets/AutoMoT_v2.mp4" width="90%" autoplay loop muted playsinline controls></video>
-</p>
+https://github.com/user-attachments/assets/dcd08673-5ea5-49a1-8dca-5d4b4b8d91fa
 
 **AutoMoT** is a asyncronous VLA end-to-end autonomous driving agent accepted at **ICML 2026**.
 
