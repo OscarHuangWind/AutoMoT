@@ -18,10 +18,10 @@
 </p>
 
 <p align="center">
-  <img src="./assets/AutoMoT_v2.gif" alt="AutoMoT Framework" width="90%" loop autoplay>
+  <video src="./assets/AutoMoT_v2.mp4" width="90%" autoplay loop muted playsinline controls></video>
 </p>
 
-**AutoMoT** is a asyncronous VLA end-to-end autonomous driving agent accepted at **ICML 2026**. This repository contains the open-source inference code for running AutoMoT on the [Bench2Drive](https://github.com/Thinklab-SJTU/Bench2Drive) benchmark (CARLA 0.9.15).
+**AutoMoT** is a asyncronous VLA end-to-end autonomous driving agent accepted at **ICML 2026**.
 
 > **Current release**: Closed-loop inference on Bench2Drive (220 routes); model checkpoints and NuSync dataset are public. Training code coming soon — see [TODO](#todo-list).
 
