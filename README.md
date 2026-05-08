@@ -19,7 +19,7 @@
 
 https://github.com/user-attachments/assets/dcd08673-5ea5-49a1-8dca-5d4b4b8d91fa
 
-**AutoMoT** is a asyncronous VLA end-to-end autonomous driving agent accepted at **ICML 2026**.
+**AutoMoT** is an asyncronous VLA end-to-end autonomous driving agent accepted at **ICML 2026**.
 
 > **Current release**: Closed-loop inference on Bench2Drive (220 routes); model checkpoints and NuSync dataset are public. Training code coming soon — see [TODO](#todo-list).
 
