@@ -1,11 +1,5 @@
 
-# AutoMoT: A Unified Vision-Language-Action Model with Asynchronous Mixture-of-Transformers for End-to-End Autonomous Driving(ICML 2026) 
-
-<p align="center">
-  <a href="https://huggingface.co/HqH1111/automot_checkpoint">
-    <img src="./assets/frameworkv2.png" alt="AutoMoT Framework" width="90%">
-  </a>
-</p>
+# [ICML'26]AutoMoT: A Unified Vision-Language-Action Model with Asynchronous Mixture-of-Transformers for End-to-End Autonomous Driving
 
 <p align="center">
   <a href="https://icml.cc/">
@@ -23,7 +17,11 @@
   <a href="https://huggingface.co/datasets/Oscar-Huang/NuSync"><img src="https://img.shields.io/badge/%F0%9F%A4%97_Datasets-NuSync-orange?style=flat-square" alt="Datasets"></a>
 </p>
 
-**AutoMoT** is a multimodal end-to-end autonomous driving agent accepted at **ICML 2026**. This repository contains the open-source inference code for running AutoMoT on the [Bench2Drive](https://github.com/Thinklab-SJTU/Bench2Drive) benchmark (CARLA 0.9.15).
+<p align="center">
+  <img src="./assets/AutoMoT_v2.gif" alt="AutoMoT Framework" width="90%" loop autoplay>
+</p>
+
+**AutoMoT** is a asyncronous VLA end-to-end autonomous driving agent accepted at **ICML 2026**. This repository contains the open-source inference code for running AutoMoT on the [Bench2Drive](https://github.com/Thinklab-SJTU/Bench2Drive) benchmark (CARLA 0.9.15).
 
 > **Current release**: Closed-loop inference on Bench2Drive (220 routes); model checkpoints and NuSync dataset are public. Training code coming soon — see [TODO](#todo-list).
 
