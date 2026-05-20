@@ -81,6 +81,11 @@ Bench2Drive_opensource/
 │   ├── data/bench2drive220/          # 220 route XML files
 │   └── scripts/
 │       └── run_evaluation_route.sh   # Route-by-route evaluation
+├── eval_json/                        # Route JSON files for evaluation
+│   ├── b2d_all_routes.json           # All 220 routes
+│   ├── b2d_all_routes_split1.json    # Routes 1–110 (for multi-GPU)
+│   ├── b2d_all_routes_split2.json    # Routes 111–220 (for multi-GPU)
+│   └── b2d_all_routes_merged.json    # Route ID index (used by run script)
 ├── scenario_runner/                  # CARLA scenario execution
 ```
 
