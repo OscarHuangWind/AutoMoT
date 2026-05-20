@@ -21,8 +21,17 @@ https://github.com/user-attachments/assets/dcd08673-5ea5-49a1-8dca-5d4b4b8d91fa
 
 **AutoMoT** is an asyncronous VLA end-to-end autonomous driving agent accepted at **ICML 2026**.
 
-> **Current release**: Closed-loop inference on Bench2Drive (220 routes); model checkpoints and NuSync dataset are public. Training code coming soon — see [TODO](#todo-list).
+> **Current release**: Closed-loop inference on Bench2Drive (220 routes); model checkpoints and NuSync dataset are open-sourced. Training code coming soon — see [TODO](#todo-list).
 
+---
+
+## TODO List <a name="todo-list"></a>
+
+- [x] Bench2Drive closed-loop inference (220 routes, CARLA 0.9.15)
+- [x] Model checkpoint release ([HuggingFace](https://huggingface.co/Oscar-Huang/AutoMoT))
+- [x] NuSync dataset release ([HuggingFace](https://huggingface.co/datasets/Oscar-Huang/NuSync))
+- [ ] Training code release
+- [ ] Action Refiner code release
 ---
 
 ## Table of Contents
@@ -172,19 +181,10 @@ This script:
 Bench2Drive 220-route closed-loop evaluation (DS↑ / SR↑):
 
 <p align="center">
-  <img src="./assets/b2d.png" alt="Bench2Drive Results" width="85%">
+  <img src="./assets/b2d_final.png" alt="Bench2Drive Results" width="85%">
 </p>
 
 **AutoMoT achieves DS=87.34 / SR=70.00**
-
----
-
-## TODO List <a name="todo-list"></a>
-
-- [x] Bench2Drive closed-loop inference (220 routes, CARLA 0.9.15)
-- [x] Model checkpoint release ([HuggingFace](https://huggingface.co/Oscar-Huang/AutoMoT))
-- [x] NuSync dataset release ([HuggingFace](https://huggingface.co/datasets/Oscar-Huang/NuSync))
-- [ ] Training code release
 
 ---
 
