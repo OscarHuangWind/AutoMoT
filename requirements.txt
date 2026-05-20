@@ -7,9 +7,6 @@
 #
 # flash-attn (install after torch):
 #   pip install flash-attn==2.8.3 --no-build-isolation
-#
-# CARLA Python API (copy .whl from CARLA installation):
-#   pip install $CARLA_ROOT/PythonAPI/carla/dist/carla-0.9.15-cp310-cp310-linux_x86_64.whl
 
 # --- Model inference ---
 transformers==4.57.3

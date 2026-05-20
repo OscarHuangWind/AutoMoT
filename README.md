@@ -119,11 +119,11 @@ pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 torchaudio==2.7.1+cu128
 # Install all requirements
 pip install -r requirements.txt
 
+# CARLA Python API (Python 3.10, available on PyPI)
+pip install carla==0.9.15
+
 # flash-attn (requires torch to be installed first)
 pip install flash-attn==2.8.3 --no-build-isolation
-
-# CARLA Python API
-pip install $CARLA_ROOT/PythonAPI/carla/dist/carla-0.9.15-cp310-cp310-linux_x86_64.whl
 ```
 
 ### 5. Environment variables

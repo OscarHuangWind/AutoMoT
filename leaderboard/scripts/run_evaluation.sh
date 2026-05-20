@@ -31,9 +31,9 @@ export PYTHONPATH=$PYTHONPATH:${CARLA_ROOT}/PythonAPI/carla
 export PYTHONPATH=$PYTHONPATH:${LEADERBOARD_DIR}
 export PYTHONPATH=$PYTHONPATH:${LEADERBOARD_DIR}/team_code
 export PYTHONPATH=$PYTHONPATH:${PROJECT_ROOT}/scenario_runner
-export PYTHONPATH=$PYTHONPATH:${PROJECT_ROOT}/MoT-DP/team_code
-export PYTHONPATH=$PYTHONPATH:${PROJECT_ROOT}/MoT-DP
-export PYTHONPATH=$PYTHONPATH:${PROJECT_ROOT}/MoT-DP/mot
+export PYTHONPATH=$PYTHONPATH:${PROJECT_ROOT}/Automot/team_code
+export PYTHONPATH=$PYTHONPATH:${PROJECT_ROOT}/Automot
+export PYTHONPATH=$PYTHONPATH:${PROJECT_ROOT}/Automot/mot
 
 export SCENARIO_RUNNER_ROOT=${PROJECT_ROOT}/scenario_runner
 export LEADERBOARD_ROOT=${LEADERBOARD_DIR}
@@ -63,10 +63,13 @@ elif [ -f "${HOME}/miniconda3/etc/profile.d/conda.sh" ]; then
 elif [ -f "${HOME}/anaconda3/etc/profile.d/conda.sh" ]; then
     source "${HOME}/anaconda3/etc/profile.d/conda.sh"
 fi
-conda activate bench2drive
+conda activate automot
 
-# PosixPath bug in generate_lidar_bev_b2d.py has been fixed (str() wrap)
-# torch.compile is now allowed — needed for flex_attention acceleration
+# Disable torch.compile to avoid PosixPath issues during leaderboard evaluation
+export TORCH_COMPILE_DISABLE=1
+
+# Suppress tokenizers fork warning
+export TOKENIZERS_PARALLELISM=false
 
 # Enable PyTorch CUDA memory optimization
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
