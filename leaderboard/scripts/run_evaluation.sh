@@ -1,17 +1,11 @@
 #!/bin/bash
-# ============================================================
-# Bench2Drive Evaluation Script
-# ============================================================
 # Usage: bash run_evaluation.sh <PORT> <TM_PORT> <IS_BENCH2DRIVE> <ROUTES> <TEAM_AGENT> <TEAM_CONFIG> <CHECKPOINT_ENDPOINT> <SAVE_PATH> <PLANNER_TYPE> <GPU_RANK> [ROUTES_SUBSET] [TM_SEED]
 
-# Auto-detect project root from script location
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LEADERBOARD_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PROJECT_ROOT="$(cd "${LEADERBOARD_DIR}/.." && pwd)"
 
-# CARLA_ROOT: try to auto-detect if not set
 if [ -z "${CARLA_ROOT}" ]; then
-    # Try common locations relative to the project
     if [ -d "$(dirname "${PROJECT_ROOT}")/carla" ]; then
         export CARLA_ROOT="$(dirname "${PROJECT_ROOT}")/carla"
     elif [ -d "${HOME}/carla" ]; then
@@ -25,13 +19,11 @@ if [ -z "${CARLA_ROOT}" ]; then
 fi
 export CARLA_SERVER=${CARLA_ROOT}/CarlaUE4.sh
 
-# PYTHONPATH setup (all relative to PROJECT_ROOT)
 export PYTHONPATH=$PYTHONPATH:${CARLA_ROOT}/PythonAPI
 export PYTHONPATH=$PYTHONPATH:${CARLA_ROOT}/PythonAPI/carla
 export PYTHONPATH=$PYTHONPATH:${LEADERBOARD_DIR}
 export PYTHONPATH=$PYTHONPATH:${LEADERBOARD_DIR}/team_code
 export PYTHONPATH=$PYTHONPATH:${PROJECT_ROOT}/scenario_runner
-export PYTHONPATH=$PYTHONPATH:${PROJECT_ROOT}/Automot/team_code
 export PYTHONPATH=$PYTHONPATH:${PROJECT_ROOT}/Automot
 export PYTHONPATH=$PYTHONPATH:${PROJECT_ROOT}/Automot/mot
 
@@ -47,15 +39,16 @@ export PLANNER_TYPE=$9
 export GPU_RANK=${10}
 export ROUTES_SUBSET=${11:-""}
 export TM_SEED=${12:-0}
+export RECORD_PATH="${RECORD_PATH:-}"
+export RESUME="${RESUME:-False}"
 
-# TCP evaluation
 export ROUTES=$4
 export TEAM_AGENT=$5
 export TEAM_CONFIG=$6
 export CHECKPOINT_ENDPOINT=$7
 export SAVE_PATH=$8
 
-# Activate conda environment (adjust path if needed)
+AUTOMOT_CONDA_ENV="${AUTOMOT_CONDA_ENV:-automot}"
 if [ -f "${CONDA_PREFIX}/../../etc/profile.d/conda.sh" ]; then
     source "${CONDA_PREFIX}/../../etc/profile.d/conda.sh"
 elif [ -f "${HOME}/miniconda3/etc/profile.d/conda.sh" ]; then
@@ -63,15 +56,18 @@ elif [ -f "${HOME}/miniconda3/etc/profile.d/conda.sh" ]; then
 elif [ -f "${HOME}/anaconda3/etc/profile.d/conda.sh" ]; then
     source "${HOME}/anaconda3/etc/profile.d/conda.sh"
 fi
-conda activate automot
+if command -v conda >/dev/null 2>&1; then
+    conda activate "${AUTOMOT_CONDA_ENV}"
+else
+    echo "WARNING: conda was not found; using the current Python environment."
+fi
 
-# Disable torch.compile to avoid PosixPath issues during leaderboard evaluation
-export TORCH_COMPILE_DISABLE=1
+export TORCH_COMPILE_DISABLE="${TORCH_COMPILE_DISABLE:-1}"
+export TORCHINDUCTOR_COMPILE_THREADS="${TORCHINDUCTOR_COMPILE_THREADS:-1}"
+export AUTOMOT_COMPILE_BLOCK_MASK="${AUTOMOT_COMPILE_BLOCK_MASK:-0}"
 
-# Suppress tokenizers fork warning
 export TOKENIZERS_PARALLELISM=false
 
-# Enable PyTorch CUDA memory optimization
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 echo "Using TrafficManager seed: ${TM_SEED}"

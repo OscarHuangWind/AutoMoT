@@ -11,7 +11,7 @@ class GlobalConfig:
   """
   Config class that contains all the hyperparameters needed to build any model.
   """
-  # Colors used for drawing during debugging
+  # Colors used for route and object overlays
   future_route_color = carla.Color(0, 1, 0)
   other_vehicles_forecasted_bbs_color = carla.Color(0, 0, 1, 1)
   leading_vehicle_color = carla.Color(1, 0, 0, 0)
@@ -48,7 +48,7 @@ class GlobalConfig:
     self.max_blocked_ticks = 170
     # Minimum walker speed
     self.min_walker_speed = 0.5
-    # Time in seconds to draw the things during debugging.
+    # Time in seconds to keep overlay drawings visible.
     self.draw_life_time = 0.051
     # Points sampled per meter when interpolating route.
     self.points_per_meter = 10
@@ -78,15 +78,15 @@ class GlobalConfig:
     self.idm_bicycle_desired_time_headway = 0.25
     # IDM minimum distance for leading vehicles
     self.idm_leading_vehicle_minimum_distance = 4.0
-    # IDM desrired time headway for leading vehicles
+    # IDM desired time headway for leading vehicles
     self.idm_leading_vehicle_time_headway = 0.25
     # IDM minimum distance for two way scenarios
     self.idm_two_way_scenarios_minimum_distance = 2.0
-    # IDM desrired time headway for two way scenarios
+    # IDM desired time headway for two way scenarios
     self.idm_two_way_scenarios_time_headway = 0.1
-    # Boundary time - the integration won’t continue beyond it.
+    # Boundary time; the integration will not continue beyond it.
     self.idm_t_bound = 0.05
-    # IDM maximum accelaration parameter per frame
+    # IDM maximum acceleration parameter per frame
     self.idm_maximum_acceleration = 24.0
     # The following parameters were determined by measuring the vehicle's braking performance.
     # IDM maximum deceleration parameter per frame while driving slow
@@ -152,7 +152,7 @@ class GlobalConfig:
     self.minimum_lookahead_distance_to_compute_near_lane_change = 20 * self.points_per_meter
     # Check if did a lane change in the previous x meters
     self.check_previous_distance_for_lane_change = 15 * self.points_per_meter
-    # Draw x meters of the route during debugging
+    # Draw x meters of the future route.
     self.draw_future_route_till_distance = 50 * self.points_per_meter
     # Default minimum distance to process the route obstacle scenarios
     self.default_max_distance_to_process_scenario = 50
@@ -436,7 +436,7 @@ class GlobalConfig:
     # Training
     # -----------------------------------------------------------------------------
     self.local_rank = -999
-    self.id = 'transfuser'  # Unique experiment identifier.
+    self.id = 'bev_encoder'  # Unique experiment identifier.
     self.epochs = 31  # Number of epochs to train
     self.lr = 3e-4  # Learning rate used for training
     self.batch_size = 16  # Batch size used during training
@@ -461,7 +461,7 @@ class GlobalConfig:
     self.augment = 1  # Whether to use rotation and translation augmentation
     # At which interval to save debug files to disk during training
     self.train_debug_save_freq = 1
-    self.backbone = 'transFuser'  # Vision backbone architecture used
+    self.backbone = 'bev_encoder'  # Vision backbone architecture used
     self.use_velocity = 1  # Whether to use the velocity as input to the network
     self.image_architecture = 'regnety_032'  # Image architecture used in the backbone resnet34, regnety_032
     self.lidar_architecture = 'regnety_032'  # LiDAR architecture used in the backbone resnet34, regnety_032
@@ -503,7 +503,7 @@ class GlobalConfig:
     }
     self.root_dir = ''
     self.val_towns = []
-    # NOTE currently leads to inf gradients do not use! Whether to use automatic mixed precision during training.
+    # Automatic mixed precision is disabled by default for this BEV encoder config.
     self.use_amp = 0
     self.use_grad_clip = 0  # Whether to clip the gradients
     self.grad_clip_max_norm = 1.0  # Max value for the gradients if gradient clipping is used.
@@ -596,7 +596,7 @@ class GlobalConfig:
     self.num_bb_classes = 5  # Added emergency vehicle class
 
     # -----------------------------------------------------------------------------
-    # TransFuser Model
+    # BEV encoder Model
     # -----------------------------------------------------------------------------
     # Waypoint GRU
     self.gru_hidden_size = 64
@@ -756,7 +756,7 @@ class GlobalConfig:
 
     self.extra_sensor_channels = 128  # Number of channels the extra sensors are embedded to
 
-    self.use_tp = True  # Whether to use the target point as input to TransFuser
+    self.use_tp = True  # Whether to use the target point as input to BEV encoder
     self.two_tp_input = False  # Whether to use the next two target points as input instead of just one
 
     # Unit meters. Points from the LiDAR higher than this threshold are discarded. Default uses all the points.
@@ -817,8 +817,6 @@ class GlobalConfig:
     self.plant_precision_brake = 2  # 2: true, false
     self.plant_object_types = 6  # vehicle, pedestrian, traffic light, stop sign, route, other
     self.plant_num_attributes = 7  # x,y, extent x, extent y,yaw,speed, brake, (class)
-    # Options: prajjwal1/bert-tiny, prajjwal1/bert-mini, prajjwal1/bert-small, prajjwal1/bert-medium
-    self.plant_hf_checkpoint = 'prajjwal1/bert-medium'
     self.plant_embd_pdrop = 0.1
     self.plant_pretraining = None
     self.plant_max_speed_pred = 60.0  # Maximum speed we classify when forcasting cars.
@@ -852,7 +850,7 @@ class GlobalConfig:
     else:
       raise ValueError(f'Error: Selected setting: {setting} does not exist.')
 
-    print('Setting: ', setting)
+    print(f'Setting: {setting}')
     self.data_roots = []
     for td_path in self.root_dir:
       self.data_roots = self.data_roots + [os.path.join(td_path, name) for name in os.listdir(td_path)]

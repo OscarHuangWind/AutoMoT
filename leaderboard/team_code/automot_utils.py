@@ -1,19 +1,26 @@
 """
 AutoMoT utilities: CARLA geometry/sensor helpers and MoT model loading.
-Merged from transfuser_utils.py and mot_utils.py.
 """
+import glob
+import itertools
+import json
 import math
+import os
+import random
+from collections import deque
+from copy import deepcopy
+from dataclasses import dataclass, field
+
 import carla
+import cv2
 import numpy as np
+import shapely
 import torch
 import torch.nn.functional as F
+from safetensors import safe_open
+from shapely.geometry import Polygon
 from torch import nn
-import cv2
-from collections import deque
-from shapely.geometry import Polygon, Point
-import shapely
-import itertools
-from copy import deepcopy
+from transformers import HfArgumentParser
 
 
 def normalize_angle(x):
@@ -583,7 +590,6 @@ def convert_depth(data):
 
   normalized = np.dot(data, [65536.0, 256.0, 1.0])
   normalized /= (256 * 256 * 256 - 1)
-  # in_meters = 1000 * normalized
   # clip to 50 meters
   normalized = np.clip(normalized, a_min=0.0, a_max=0.05)
   normalized = normalized * 20.0  # Rescale map to lie in [0,1]
@@ -779,7 +785,7 @@ def circle_line_segment_intersection(circle_center, circle_radius, pt1, pt2, ful
   """
 
   if np.linalg.norm(pt1 - pt2) < 0.000000001:
-    print('Problem')
+    return []
 
   (p1x, p1y), (p2x, p2y), (cx, cy) = pt1, pt2, circle_center
   (x1, y1), (x2, y2) = (p1x - cx, p1y - cy), (p2x - cx, p2y - cy)
@@ -805,39 +811,21 @@ def circle_line_segment_intersection(circle_center, circle_radius, pt1, pt2, ful
       return intersections
 
 
-def crop_array(config, images_i):  # images_i must have dimensions (H,W,C) or (H,W)
+def crop_array(config, images_i):
   """
-  Crop rgb images to the desired height and width
+  Crop images with shape (H, W, C) or (H, W) to the configured size.
   """
   if config.crop_image:
-    # crops rgb/depth/semantics from the bottom to cropped_height and symetrically from both sides to cropped_width
     assert config.cropped_height <= images_i.shape[0]
     assert config.cropped_width <= images_i.shape[1]
     side_crop_amount = (images_i.shape[1] - config.cropped_width) // 2
-    if len(images_i.shape) > 2:  # for rgb, we have 3 channels
+    if len(images_i.shape) > 2:
       return images_i[0:config.cropped_height, side_crop_amount:images_i.shape[1] - side_crop_amount, :]
-    else:  # for depth and semantics, there is no channel dimension
+    else:
       return images_i[0:config.cropped_height, side_crop_amount:images_i.shape[1] - side_crop_amount]
   else:
     return images_i
 
-
-# ─── MoT Model Utilities ───
-
-
-import os
-import sys
-import json
-import random
-import glob
-from dataclasses import dataclass, field
-import numpy as np
-import torch
-from PIL import Image
-from safetensors.torch import load_file
-from transformers import HfArgumentParser
-
-# Resolve project root: leaderboard/team_code/automot_utils.py -> project_root
 _AUTOMOT_UTILS_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(_AUTOMOT_UTILS_DIR))
 _AUTOMOT_ROOT = os.path.join(_PROJECT_ROOT, "Automot")
@@ -846,20 +834,12 @@ _AUTOMOT_ROOT = os.path.join(_PROJECT_ROOT, "Automot")
 @dataclass
 class ModelArguments:
     model_path: str = field(
-        default=os.path.join(_AUTOMOT_ROOT, "checkpoints", "mot", "0025000"),
+        default=os.environ.get("AUTOMOT_MODEL_PATH", os.path.join(_AUTOMOT_ROOT, "checkpoints")),
         metadata={"help": "Path to the converted AutoMoT model checkpoint"}
     )
     qwen3vl_path: str = field(
-        default=os.path.join(_AUTOMOT_ROOT, "checkpoints"),
+        default=os.environ.get("QWEN3VL_PATH", os.path.join(_AUTOMOT_ROOT, "checkpoints")),
         metadata={"help": "Path to the Qwen3VL base model for config loading"}
-    )
-    max_latent_size: int = field(
-        default=64,
-        metadata={"help": "Maximum size of latent representations"}
-    )
-    latent_patch_size: int = field(
-        default=2,
-        metadata={"help": "Patch size for latent space processing"}
     )
     vit_max_num_patch_per_side: int = field(
         default=70,
@@ -910,12 +890,8 @@ class InferenceArguments:
         metadata={"help": "Path to the output JSONL file. If empty, will use input filename with .pred.jsonl suffix"}
     )
     base_path: str = field(
-        default="/share-data/pdm_lite",
+        default_factory=lambda: os.environ.get("PDM_DATA_DIR", ""),
         metadata={"help": "Base path for resolving relative image paths. If empty, use current working directory"}
-    )
-    visual_gen: bool = field(
-        default=True,
-        metadata={"help": "Enable visual generation capabilities"}
     )
     visual_und: bool = field(
         default=True,
@@ -935,42 +911,77 @@ class InferenceArguments:
     )
 
 
-def load_safetensors_weights(model_path):
-    """Load weights from single or multiple safetensors files."""
-    # Set USE_EMA_WEIGHTS=1 to use ema.safetensors instead of model.safetensors
+def _resolve_safetensor_files(model_path):
+    """Resolve checkpoint files in load order without materializing tensors."""
     use_ema = os.environ.get("USE_EMA_WEIGHTS", "0") == "1"
-    print(f"[DEBUG] USE_EMA_WEIGHTS env = '{os.environ.get('USE_EMA_WEIGHTS', 'NOT SET')}', use_ema = {use_ema}")
-    print(f"[DEBUG] automot_utils.py loaded from: {__file__}")
     if use_ema:
         ema_file = os.path.join(model_path, "ema.safetensors")
         if os.path.exists(ema_file):
-            print(f"[EMA] Loading EMA weights from: {ema_file}")
-            return load_file(ema_file)
-        else:
-            print(f"[EMA] ema.safetensors not found, falling back to model.safetensors")
-    # Try single file first (like AutoMoT 2B)
+            print(f"[EMA] Streaming EMA weights from: {ema_file}")
+            return [ema_file]
+        print("[EMA] ema.safetensors not found, falling back to model.safetensors")
+
     single_file = os.path.join(model_path, "model.safetensors")
     if os.path.exists(single_file):
-        print(f"Loading from single file: {single_file}")
-        return load_file(single_file)
-    
-    # Try multiple files (like Qwen3VL-4B)
-    pattern = os.path.join(model_path, "model-*.safetensors")
-    safetensor_files = sorted(glob.glob(pattern))
-    
+        return [single_file]
+
+    safetensor_files = sorted(glob.glob(os.path.join(model_path, "model-*.safetensors")))
     if not safetensor_files:
         raise FileNotFoundError(f"No safetensors files found in {model_path}")
-    
-    print(f"Loading from multiple files: {safetensor_files}")
-    combined_state_dict = {}
-    
-    for file_path in safetensor_files:
-        file_state_dict = load_file(file_path)
-        combined_state_dict.update(file_state_dict)
-        print(f"Loaded {len(file_state_dict)} parameters from {os.path.basename(file_path)}")
-    
-    print(f"Total loaded parameters: {len(combined_state_dict)}")
-    return combined_state_dict
+    return safetensor_files
+
+
+def load_safetensors_weights_streaming(model, model_path):
+    """Load safetensors into an initialized model one tensor at a time."""
+    import gc
+
+    files = _resolve_safetensor_files(model_path)
+    print(f"Streaming weights from {len(files)} safetensors file(s).")
+
+    model_state = model.state_dict()
+    missing_keys = set(model_state.keys())
+    unexpected_keys = []
+    loaded = 0
+
+    with torch.no_grad():
+        for file_path in files:
+            file_loaded = 0
+            with safe_open(file_path, framework="pt", device="cpu") as f:
+                for key in f.keys():
+                    if key.startswith("bev_encoder."):
+                        continue
+                    target = model_state.get(key)
+                    if target is None:
+                        unexpected_keys.append(key)
+                        continue
+
+                    tensor = f.get_tensor(key)
+                    if tensor.shape != target.shape:
+                        unexpected_keys.append(key)
+                        print(
+                            f"Shape mismatch for {key}: checkpoint {tuple(tensor.shape)} "
+                            f"!= model {tuple(target.shape)}"
+                        )
+                        del tensor
+                        continue
+
+                    if tensor.dtype != target.dtype:
+                        tensor = tensor.to(dtype=target.dtype)
+                    target.copy_(tensor)
+
+                    missing_keys.discard(key)
+                    loaded += 1
+                    file_loaded += 1
+                    del tensor
+
+                    if loaded % 500 == 0:
+                        gc.collect()
+
+            print(f"Streamed {file_loaded} tensors from {os.path.basename(file_path)}")
+            gc.collect()
+
+    print(f"Total streamed tensors: {loaded}")
+    return list(missing_keys), unexpected_keys
 
 
 def convert_model_dtype_with_exceptions(model, target_dtype, exclude_buffer_patterns=None):
@@ -1003,21 +1014,30 @@ def convert_model_dtype_with_exceptions(model, target_dtype, exclude_buffer_patt
 
 def load_model_mot(device):
     """Load and initialize the MoT model with proper configuration."""
+    parser = HfArgumentParser((ModelArguments, InferenceArguments))
+    model_args, inference_args = parser.parse_args_into_dataclasses(args=[])
+
+    def has_tokenizer_files(path):
+        return path and os.path.isdir(path) and any(
+            os.path.isfile(os.path.join(path, name))
+            for name in ("tokenizer.json", "tokenizer_config.json")
+        )
+
+    tokenizer_path = model_args.model_path if has_tokenizer_files(model_args.model_path) else model_args.qwen3vl_path
+    os.environ.setdefault("QWEN3VL_TOKENIZER_PATH", tokenizer_path)
+    os.environ.setdefault("QWEN3VL_PROCESSOR_PATH", model_args.qwen3vl_path)
+    os.environ.setdefault("QWEN3VL_PATH", model_args.qwen3vl_path)
+
     from mot.modeling.automot import (
         AutoMoTConfig, AutoMoT,
-        Qwen3VLTextConfig, Qwen3VLTextModel, Qwen3VLForConditionalGenerationMoT
+        Qwen3VLTextConfig, Qwen3VLForConditionalGenerationMoT
     )
     from transformers.models.qwen3_vl.modeling_qwen3_vl import Qwen3VLVisionModel
     from transformers.models.qwen3_vl.configuration_qwen3_vl import Qwen3VLVisionConfig
 
-    parser = HfArgumentParser((ModelArguments, InferenceArguments))
-    model_args, inference_args = parser.parse_args_into_dataclasses(args=[])
-
-    # Set QWEN3VL_PROCESSOR_PATH in automot module before model instantiation
-    # The auto-detection looks for config/mot_config but the actual file is in checkpoints/base_config
     import mot.modeling.automot.automot as _automot_module
-    if _automot_module.QWEN3VL_PROCESSOR_PATH is None:
-        _automot_module.QWEN3VL_PROCESSOR_PATH = model_args.qwen3vl_path
+    _automot_module.QWEN3VL_TOKENIZER_PATH = tokenizer_path
+    _automot_module.QWEN3VL_PROCESSOR_PATH = model_args.qwen3vl_path
 
     assert torch.cuda.is_available(), "CUDA is required"
     seed = 42
@@ -1050,12 +1070,9 @@ def load_model_mot(device):
     vit_config = Qwen3VLVisionConfig(**vision_config_dict)
 
     config = AutoMoTConfig(
-        visual_gen=inference_args.visual_gen,
         visual_und=inference_args.visual_und,
         llm_config=llm_config,
         vision_config=vit_config,
-        latent_patch_size=model_args.latent_patch_size,
-        max_latent_size=model_args.max_latent_size,
         connector_act=model_args.connector_act,
         interpolate_pos=False,
         reasoning_query_dim=model_args.reasoning_query_dim,
@@ -1064,19 +1081,20 @@ def load_model_mot(device):
         action_query_tokens=model_args.action_query_tokens,
     )
 
-    # Initialize model on CPU first to save GPU memory during loading
-    print("Initializing model on CPU...")
-    language_model = Qwen3VLForConditionalGenerationMoT(llm_config)
-    vit_model = Qwen3VLVisionModel(vit_config)
-    model = AutoMoT(language_model, vit_model, config)
+    # Initialize directly in bfloat16 on CPU to avoid a large fp32 memory peak.
+    print("Initializing model on CPU in bfloat16...")
+    previous_dtype = torch.get_default_dtype()
+    torch.set_default_dtype(torch.bfloat16)
+    try:
+        language_model = Qwen3VLForConditionalGenerationMoT(llm_config)
+        vit_model = Qwen3VLVisionModel(vit_config)
+        model = AutoMoT(language_model, vit_model, config)
+    finally:
+        torch.set_default_dtype(previous_dtype)
 
     # Load converted AutoMoT checkpoint manually (accelerate has weight issues)
     print(f"Loading converted AutoMoT checkpoint from {model_args.model_path}...")
-    
-    state_dict = load_safetensors_weights(model_args.model_path)
-    # Remap old checkpoint key names (transfuser_proj -> bev_encoder_proj)
-    state_dict = {k.replace('transfuser_proj', 'bev_encoder_proj'): v for k, v in state_dict.items()}
-    missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
+    missing_keys, unexpected_keys = load_safetensors_weights_streaming(model, model_args.model_path)
     
     # Filter out lm_head.weight from missing keys if tie_word_embeddings=True
     actual_missing_keys = [k for k in missing_keys if k != 'language_model.lm_head.weight']
@@ -1087,13 +1105,10 @@ def load_model_mot(device):
     if unexpected_keys:
         print(f"Unexpected keys: {unexpected_keys[:5]}")
     
-    # Free state_dict memory immediately
-    del state_dict
     import gc
     gc.collect()
     
-    # Convert to bfloat16 on CPU first (saves GPU memory during transfer)
-    print("Converting model to bfloat16 on CPU...")
+    print("Ensuring bfloat16 before moving model to GPU...")
     model = convert_model_dtype_with_exceptions(
         model,
         torch.bfloat16,
@@ -1121,7 +1136,7 @@ def load_model_mot(device):
     elif embed_norm < 10:
         print("WARNING: embed_tokens weights appear to be randomly initialized!")
     else:
-        print("✓ tie_word_embeddings is working correctly")
+        print("tie_word_embeddings is working correctly")
     
     # Final cleanup
     gc.collect()

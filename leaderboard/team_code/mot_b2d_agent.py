@@ -15,8 +15,6 @@ from PIL import Image
 from torchvision import transforms as T
 import imageio
 import random
-import sys
-import numpy as np
 from filterpy.kalman import MerweScaledSigmaPoints
 from filterpy.kalman import UnscentedKalmanFilter as UKF
 
@@ -48,7 +46,7 @@ from mot.modeling.bev_encoder.backbone_extractor import BEVEncoderBackboneExtrac
 from mot.modeling.bev_encoder.config import GlobalConfig as BEVEncoderConfig
 import mot.modeling.bev_encoder.bev_encoder_utils as bev_encoder_t_u
 
-# mot dependencies
+# AutoMoT dependencies
 projects_root = str(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(projects_root)
 mot_dp_path = str(os.path.join(os.path.dirname(projects_root), 'Automot'))
@@ -63,19 +61,18 @@ from dataclasses import dataclass, field
 from transformers.models.qwen3_vl.modeling_qwen3_vl import Qwen3VLVisionModel
 from transformers.models.qwen3_vl.configuration_qwen3_vl import Qwen3VLVisionConfig
 from PIL import Image
-from safetensors.torch import load_file
+from safetensors import safe_open
 import glob
-from data.reasoning.data_utils import add_special_tokens
+from data.automot.data_utils import add_special_tokens
 from mot.modeling.automot import (
     AutoMoTConfig, AutoMoT,
     Qwen3VLTextConfig, Qwen3VLTextModel, Qwen3VLForConditionalGenerationMoT
 )
-from mot.evaluation.inference import InterleaveInferencer
+from evaluation.inference import InterleaveInferencer
 from transformers import AutoTokenizer
 
 from team_code.bev_data_utils import lidar_to_histogram_features as lidar_to_bev_histogram
 
-# Import utility modules
 from team_code.automot_utils import (
     ModelArguments, InferenceArguments,
     load_model_mot, build_cleaned_prompt_and_modes,
@@ -123,7 +120,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 		
 		device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-		# Aggressive memory cleanup before loading MoT model
+		# Release cached memory before loading the model stack.
 		gc.collect()
 		if torch.cuda.is_available():
 			torch.cuda.empty_cache()
@@ -139,45 +136,39 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 		tokenizer, new_token_ids, _ = add_special_tokens(tokenizer)
 		self.AutoMoT.language_model.tokenizer = tokenizer
 		self.inferencer = InterleaveInferencer(
-        model=self.AutoMoT,
-        vae_model=None,
-        tokenizer=tokenizer,
-        vae_transform=None,
-        vit_transform=None,  # Not used for Qwen3VL, handled internally by model
-        new_token_ids=new_token_ids,
-        max_num_tokens=inference_args.max_num_tokens,
-        visual_gen=True,  # Enable visual generation to initialize query tokens
-        visual_und=True,  # Enable visual understanding
-    	)
-		print("✓ MoT model loaded.")
+			model=self.AutoMoT,
+			tokenizer=tokenizer,
+			vit_transform=None,
+			new_token_ids=new_token_ids,
+			max_num_tokens=inference_args.max_num_tokens,
+		)
+		print("MoT model loaded.")
 
-		# ========== Load BEV Encoder Backbone ==========
 		print("Loading BEV encoder backbone...")
-		bev_encoder_config_path = os.path.join(str(pathlib.Path(__file__).parent.parent.parent), 'Automot', 'checkpoints')
-		combined_ckpt_path = os.path.join(str(pathlib.Path(__file__).parent.parent.parent), 'Automot', 'checkpoints', 'model.safetensors')
-		combined_sd = load_file(combined_ckpt_path)
-		bev_state_dict = {k[len('bev_encoder.'):]: v for k, v in combined_sd.items() if k.startswith('bev_encoder.')}
-		del combined_sd
+		bev_encoder_config_path = os.path.abspath(os.path.expanduser(model_args.model_path))
+		combined_ckpt_path = os.path.join(bev_encoder_config_path, 'model.safetensors')
+		bev_state_dict = {}
+		with safe_open(combined_ckpt_path, framework="pt", device="cpu") as f:
+			for key in f.keys():
+				if key.startswith('bev_encoder.'):
+					bev_state_dict[key[len('bev_encoder.'):]] = f.get_tensor(key)
 		self.bev_encoder = BEVEncoderBackboneExtractor(
 			config_path=bev_encoder_config_path,
 			device='cuda:0',
 			state_dict=bev_state_dict
 		)
 		del bev_state_dict
-		# Backbone is already frozen in BEVEncoderBackboneExtractor
 		self.bev_encoder.eval()
-		# Convert to bfloat16 to match DP model precision
 		self.bev_encoder = self.bev_encoder.to(torch.bfloat16)
-		# Get bev_encoder config for lidar processing
 		self.bev_encoder_config = self.bev_encoder.config
-		print("✓ BEV encoder backbone loaded, frozen, and converted to bfloat16.")
+		print("BEV encoder backbone loaded, frozen, and converted to bfloat16.")
 		
 		# Initialize bev_encoder lidar buffer for temporal alignment
 		self.bev_encoder_lidar_buffer = deque(maxlen=self.bev_encoder_config.lidar_seq_len * self.bev_encoder_config.data_save_freq)
 		self.bev_encoder_lidar_last = None
 		self.bev_encoder_state_log = deque(maxlen=max((self.bev_encoder_config.lidar_seq_len * self.bev_encoder_config.data_save_freq), 2))
 		
-		# Print GPU memory status
+		# Report GPU memory after both model components are resident.
 		gc.collect()
 		if torch.cuda.is_available():
 			torch.cuda.empty_cache()
@@ -253,18 +244,16 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 			# Stores the last filtered positions of the ego vehicle
 			self.state_log = deque(maxlen=20)
 
-		if SAVE_PATH is not None:
-			now = datetime.datetime.now()
+		self.save_path = None
+		if SAVE_PATH:
 			string = self.save_name
-			print (string)
-
-		self.save_path = pathlib.Path(os.environ['SAVE_PATH']) / string
-		self.save_path.mkdir(parents=True, exist_ok=False)
-
-		(self.save_path / 'rgb_front').mkdir()
-		(self.save_path / 'meta').mkdir()
-		(self.save_path / 'bev').mkdir()
-		(self.save_path / 'lidar_bev').mkdir()
+			print(string)
+			self.save_path = pathlib.Path(SAVE_PATH) / string
+			self.save_path.mkdir(parents=True, exist_ok=False)
+			(self.save_path / 'rgb_front').mkdir()
+			(self.save_path / 'meta').mkdir()
+			(self.save_path / 'bev').mkdir()
+			(self.save_path / 'lidar_bev').mkdir()
 		
 		# Initialize lidar buffer for combining two frames
 		self.lidar_buffer = deque(maxlen=2)
@@ -294,31 +283,27 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 		self.last_next_target_point = None  # Store the last next target point (in ego frame)
 		self.last_route_pred = None  # Store the last route prediction (20 waypoints for lateral control)
 
-		# ====== Parking escape: long-term displacement detection ======
+		# Parking escape uses long-term displacement detection.
 		self.parking_escape_active = False
 		self.parking_escape_phase = 0            # 1=lateral, 2=forward
 		self.parking_escape_timer = 0
 		self.parking_escape_anchor = None
-		self.parking_escape_start_compass = None # Record heading at escape start
+		self.parking_escape_start_compass = None
 		self.parking_escape_attempt = 0
 		self.parking_escape_cooldown = 0
 		self.parking_escape_direction = 1.0      # +1 = escape left, -1 = escape right
-		# Position snapshots: record GPS every N frames
-		self.pos_snapshot_interval = 200         # Record every 10 seconds (200 frames @ 20fps)
+		self.pos_snapshot_interval = 200
 		self.pos_snapshots = []                  # [(step, pos), ...]
-		self.parking_deadlock_window = 1500      # Check window: 1500 frames = 125 seconds (> max red light 60s)
-		self.parking_deadlock_max_disp = 5.0     # Max displacement in window to be considered stuck
-		# Detect parking-start scenario: if barely moved in first N frames, disable force_move for entire episode
-		self.parking_start_check_frame = 200     # Check at frame 200 (10s @ 20fps)
-		self.parking_start_disp_thresh = 6.0     # If displacement < 6m in first 200 frames -> parking start
-		self.parking_start_detected = False       # Set once at check frame, never changes after
-		self.parking_start_checked = False        # Whether the check has been performed
-		self.parking_start_anchor = None          # GPS position at BUFFER_PHASE start
+		self.parking_deadlock_window = 1500
+		self.parking_deadlock_max_disp = 5.0
+		self.parking_start_check_frame = 200
+		self.parking_start_disp_thresh = 6.0
+		self.parking_start_detected = False
+		self.parking_start_checked = False
+		self.parking_start_anchor = None
 
 	def _init(self):
-		# Use _global_plan_world_coord directly (already in CARLA coordinates)
-		# This avoids the GPS-to-CARLA conversion which can fail when fsolve doesn't converge
-		# Get lat_ref/lon_ref from CARLA map directly
+		# Prefer the CARLA-frame global plan and read the map georeference when available.
 		try:
 			world_map = CarlaDataProvider.get_map()
 			xodr = world_map.to_opendrive()
@@ -339,7 +324,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 								if '+lon_0' in item:
 									self.lon_ref = float(item.split('=')[1])
 		except Exception as e:
-			# Fallback: try fsolve (might not converge)
+			# Fallback to estimating the map georeference from the first waypoint pair.
 			try:
 				locx, locy = self._global_plan_world_coord[0][0].location.x, self._global_plan_world_coord[0][0].location.y
 				lon, lat = self._global_plan[0][0]['lon'], self._global_plan[0][0]['lat']
@@ -367,7 +352,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 		if len(self._global_plan_world_coord) > 0:
 			first_wp = self._global_plan_world_coord[0]
 		
-		# Use _global_plan_world_coord with gps=False (recommended, GPS is deprecated in nav_planner.py)
+		# Route planner receives CARLA-frame waypoints directly.
 		self._route_planner.set_route(self._global_plan_world_coord, gps=False)
 		
 				
@@ -508,11 +493,11 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 			img_height=448, 
 			img_width=448
 		)
-		# Convert BEV image to tensor format for interfuser_bev_encoder backbone
+		# Convert BEV image to tensor format for the BEV encoder backbone
 		lidar_bev_tensor = torch.from_numpy(lidar_bev_img).permute(2, 0, 1).float() / 255.0
 		
 		# ========== BEV encoder style processing for DP features ==========
-		# Process RGB for BEV encoder (same as team_code_transfuser/sensor_agent.py)
+		# Process RGB for the BEV encoder backbone
 		bev_encoder_rgb = input_data['CAM_FRONT'][1][:, :, :3]
 		# Add jpg artifacts at test time, because the training data was saved as jpg
 		_, compressed_image = cv2.imencode('.jpg', bev_encoder_rgb)
@@ -524,7 +509,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 		bev_encoder_rgb = np.transpose(bev_encoder_rgb, (2, 0, 1))
 		bev_encoder_rgb_tensor = torch.from_numpy(bev_encoder_rgb).float().unsqueeze(0).to('cuda')
 		
-		# Process LiDAR for BEV encoder (same as team_code_transfuser/sensor_agent.py)
+		# Process LiDAR for the BEV encoder backbone
 		bev_encoder_lidar = bev_encoder_t_u.lidar_to_ego_coordinate(self.bev_encoder_config, input_data['LIDAR'])
 		
 		# Store state for lidar alignment
@@ -566,7 +551,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 				'speed': speed,
 				'compass': compass_filtered,  # Use UKF filtered compass
 				'bev': bev,
-				# TransFuser processed data for DP
+				# BEV encoder processed data for DP
 				'bev_encoder_rgb': bev_encoder_rgb_tensor,  # (1, 3, H, W) on GPU
 				'bev_encoder_lidar_bev': bev_encoder_lidar_bev_tensor,  # (1, C, H, W) on GPU
 				}
@@ -623,19 +608,12 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 				self.commands.append(far_command.value)
 		
 		result['next_command'] = self.commands[-2]
-		ego_target_point = t_u.inverse_conversion_2d(target_point[:2], result['gps'], result['compass']) #result['compass'])
-		ego_next_target_point = t_u.inverse_conversion_2d(next_target_point[:2], result['gps'], result['compass']) #result['compass'])
-
-		# Debug: print target point transformation
-		if self.step <= 5:
-			print(f"  target_point (world): {target_point[:2]}")
-			print(f"  ego position (gps): {result['gps']}")
-			print(f"  compass (heading): {result['compass']:.4f} rad ({np.rad2deg(result['compass']):.2f} deg)")
-			print(f"  ego_target_point: {ego_target_point}")
+		ego_target_point = t_u.inverse_conversion_2d(target_point[:2], result['gps'], result['compass'])
+		ego_next_target_point = t_u.inverse_conversion_2d(next_target_point[:2], result['gps'], result['compass'])
 		
-		result['target_point'] = ego_target_point  # numpy array (2,)
-		result['next_target_point'] = ego_next_target_point  # numpy array (2,)
-		result['theta'] = compass_filtered  # Use UKF filtered compass
+		result['target_point'] = ego_target_point
+		result['next_target_point'] = ego_next_target_point
+		result['theta'] = compass_filtered
 
 		return result
 
@@ -664,13 +642,12 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 	
 	def _truncate_route_by_target_point(self, route_waypoints_np, target_point_np):
 		"""
-		Truncate route_pred based on target_point projectsion.
+		Truncate route_pred based on the target point projection.
 		
 		Logic:
-		- projects target_point onto the polyline formed by route_pred
-		- If projectsion falls inside route_pred (route is truncated by target_point),
-		  then the portion after projectsion is inaccurate and should not be used
-		- If projectsion falls beyond route_pred's end, the entire route is valid
+		- Project target_point onto the polyline formed by route_pred.
+		- If projection falls inside route_pred, drop the portion after it.
+		- If projection falls beyond route_pred's end, keep the whole route.
 		
 		Protection mechanism:
 		- If truncated route has too few points (< MIN_POINTS_THRESHOLD) or
@@ -685,7 +662,6 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 			truncated_route: (M, 2) numpy array, M <= N, the valid portion of route_pred
 			truncation_idx: int, the index up to which the route is valid (-1 if no truncation)
 		"""
-		# Protection thresholds
 		MIN_POINTS_THRESHOLD = 5  # Minimum number of points needed for reliable control
 		MIN_LENGTH_THRESHOLD = 3.0  # Minimum route length in meters for reliable lookahead
 		
@@ -713,17 +689,12 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 				t = 0.0
 				proj = p1
 			else:
-				# projects target_point onto the line containing the segment
+				# Project target_point onto the line containing the segment.
 				t = np.dot(w, v) / l2
 				proj = p1 + t * v
 			
-			# Distance from target_point to projectsion
+			# Distance from target_point to projection.
 			dist = np.linalg.norm(target_point_np - proj)
-			
-			# We consider projectsions within or beyond the segment
-			# t < 0: projectsion is before p1
-			# 0 <= t <= 1: projectsion is within segment
-			# t > 1: projectsion is beyond p2
 			
 			if dist < min_dist:
 				min_dist = dist
@@ -731,62 +702,37 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 				best_t = t
 				best_proj_point = proj
 		
-		# Determine truncation based on projectsion position
-		# If best_t is within [0, 1], the projectsion is inside the route segment
-		# If best_t > 1, check if we're on the last segment - if so, projectsion is beyond route
-		
 		if best_segment_idx == -1:
-			# No valid segment found, return original route
 			return route_waypoints_np, -1
 		
-		# Calculate the "arc length" position of the projectsion along the route
-		# If projectsion is beyond the last point, no truncation needed
 		is_on_last_segment = (best_segment_idx == len(route_waypoints_np) - 2)
 		
 		if best_t > 1.0 and is_on_last_segment:
-			# projectsion is beyond the end of route_pred
-			# The entire route is valid for lookahead calculation
 			return route_waypoints_np, -1
 		
-		# projectsion is within route_pred or before it (shouldn't happen normally)
-		# Truncate the route at the projectsion point
 		if best_t <= 0.0:
-			# projectsion is at or before the start of this segment
-			# Keep points up to and including segment start
 			truncation_idx = best_segment_idx
 		elif best_t >= 1.0:
-			# projectsion is at or beyond the end of this segment
-			# Keep points up to and including segment end
 			truncation_idx = best_segment_idx + 1
 		else:
-			# projectsion is within the segment
-			# Keep points up to segment start, then add the projectsion point
 			truncation_idx = best_segment_idx
 		
-		# Build truncated route
 		if truncation_idx >= len(route_waypoints_np) - 1:
-			# No truncation needed
 			return route_waypoints_np, -1
 		
-		# Include points up to truncation_idx, then add projectsion point
 		truncated = route_waypoints_np[:truncation_idx + 1].copy()
 		
-		# Add the projectsion point if it's meaningfully different from the last included point
+		# Add the projection point if it is distinct from the last included point.
 		if best_proj_point is not None and len(truncated) > 0:
 			dist_to_last = np.linalg.norm(best_proj_point - truncated[-1])
-			if dist_to_last > 0.1:  # Only add if more than 0.1m away
+			if dist_to_last > 0.1:
 				truncated = np.vstack([truncated, best_proj_point])
 		
-		# ============ Protection mechanism ============
-		# Calculate the total length of truncated route
 		truncated_length = 0.0
 		for i in range(len(truncated) - 1):
 			truncated_length += np.linalg.norm(truncated[i + 1] - truncated[i])
 		
-		# Check if truncated route meets minimum requirements
 		if len(truncated) < MIN_POINTS_THRESHOLD or truncated_length < MIN_LENGTH_THRESHOLD:
-			# Truncated route is too short, skip truncation and use original route
-			# This handles edge cases near destination where target_point is very close
 			print(f"[Lateral] Skip truncation: points={len(truncated)}, length={truncated_length:.2f}m "
 				  f"(thresholds: {MIN_POINTS_THRESHOLD} points, {MIN_LENGTH_THRESHOLD}m)")
 			return route_waypoints_np, -1
@@ -804,31 +750,19 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 			target_point: (1, 2) tensor in ego frame [x_forward, y_left], unused (kept for API compat)
 		"""
 		assert route_waypoints.size(0) == 1
-		route_waypoints_np = route_waypoints[0].data.cpu().numpy()  # (N, 2)
-		speed = velocity  # Already a float
-		speed_waypoints_np = speed_waypoints[0].data.cpu().numpy()  # (N, 2)
-		
-		# if target_point is not None:
-		# 	target_point_np = target_point[0].data.cpu().numpy()  # (2,)
-		# 	route_waypoints_np, _ = self._truncate_route_by_target_point(route_waypoints_np, target_point_np)
+		route_waypoints_np = route_waypoints[0].data.cpu().numpy()
+		speed = velocity
+		speed_waypoints_np = speed_waypoints[0].data.cpu().numpy()
 		
 		# MoT trajectory: 6 points, 0.5s interval each, total 3s
 		# Point indices: 0(0.5s), 1(1.0s), 2(1.5s), 3(2.0s), 4(2.5s), 5(3.0s)
-		mot_waypoint_interval = 0.5  # seconds between waypoints
-		one_second_idx = 1 #1  # point[1] is at 1.0s
-		half_second_idx = 0  # point[0] is at 0.5s
+		one_second_idx = 1
+		half_second_idx = 0
 		
 		if speed_waypoints_np.shape[0] >= 2:
-			# Displacement from 0.5s to 1.0s position, multiply by 2 to get m/s
 			desired_speed = np.linalg.norm(speed_waypoints_np[one_second_idx] - speed_waypoints_np[half_second_idx]) * 2.0
-			# desired_speed = np.linalg.norm(speed_waypoints_np[one_second_idx] - speed_waypoints_np[half_second_idx])
 		else:
-			# Fallback: use first point distance, assuming it represents 0.5s travel
 			desired_speed = np.linalg.norm(speed_waypoints_np[0]) * 2.0
-
-		# Speed limit: cap desired_speed at 35 km/h = 35/3.6 ≈ 9.72 m/s
-		# max_desired_speed_ms = 35.0 / 3.6  # 35 km/h in m/s
-		# desired_speed = min(desired_speed, max_desired_speed_ms)
 
 		brake = ((desired_speed < self.brake_speed) or ((speed / max(desired_speed, 1e-5)) > self.brake_ratio))
 		
@@ -922,7 +856,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 		if time_span < self.parking_deadlock_window:
 			return False
 		
-		# Still in cooldown — don't trigger, just track
+		# Still in cooldown - do not trigger, just track.
 		if self.parking_escape_cooldown > 0:
 			return False
 		
@@ -944,7 +878,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 		"""
 		Activate parking escape.
 		
-		Always escape LEFT — in CARLA right-hand traffic, parking is on the right.
+		Always escape left; in CARLA right-hand traffic, parking is on the right.
 		Phase 1 directly overrides steer (model output is ignored for steering).
 		"""
 		self.parking_escape_active = True
@@ -1001,7 +935,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 			override_ntp = torch.tensor([[fwd + 3.0, lat]], dtype=torch.float32).to('cuda')
 			
 			if self.parking_escape_timer <= 0:
-				# Phase 1 done — end escape entirely, return control to model
+				# Phase 1 is complete; return control to the model.
 				self._end_parking_escape("phase 1 timeout (3s)")
 				return None, None
 			elif self.parking_escape_timer % 20 == 0:
@@ -1016,7 +950,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 		"""
 		During escape, end early if:
 		  - Vehicle has moved > 6m from anchor (displacement check), OR
-		  - Vehicle heading has changed > 25° from start (turned enough)
+		  - Vehicle heading has changed by more than 25 degrees from the start
 		"""
 		if not self.parking_escape_active or self.parking_escape_anchor is None:
 			return
@@ -1031,8 +965,8 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 				heading_diff = 2 * np.pi - heading_diff
 			heading_deg = np.degrees(heading_diff)
 			if heading_deg > 25.0:
-				print(f"[ParkingEscape] Turned {heading_deg:.1f}° (>{25}°), ending Phase 1 early")
-				self._end_parking_escape(f"heading change {heading_deg:.1f}°, disp={displacement:.1f}m")
+				print(f"[ParkingEscape] Turned {heading_deg:.1f} deg (>25 deg), ending Phase 1 early")
+				self._end_parking_escape(f"heading change {heading_deg:.1f} deg, disp={displacement:.1f}m")
 				return
 		
 		if displacement > 6.0:
@@ -1083,7 +1017,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 
 		# Prepare current observations
 		gt_velocity = torch.FloatTensor([tick_data['speed']]).to('cuda', dtype=torch.float32)
-		# Use the same method as agent_simlingo.py: t_u.command_to_one_hot with self.commands[-2]
+		# Encode the delayed high-level command used by the controller.
 		one_hot_command = t_u.command_to_one_hot(self.commands[-2])
 		cmd_one_hot = torch.from_numpy(one_hot_command[np.newaxis]).to('cuda', dtype=torch.float32)
 		# Keep command variable for metadata (convert from 1-6 to 0-5 range)
@@ -1101,7 +1035,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 		target_point = torch.from_numpy(tick_data['target_point']).unsqueeze(0).float().to('cuda', dtype=torch.float32)
 		next_target_point = torch.from_numpy(tick_data['next_target_point']).unsqueeze(0).float().to('cuda', dtype=torch.float32)
 		
-		# For debugging: print target point info occasionally
+		# Report target-point state at a low frequency.
 		if self.step % 20 == 0:
 			tp = tick_data['target_point']
 			ntp = tick_data['next_target_point']
@@ -1130,7 +1064,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 		BUFFER_PHASE = 31
 
 		if self.step < BUFFER_PHASE:
-			# Warmup phase: force brake so UKF gets stable predictions (simlingo trick)
+			# Brake during warmup so the UKF can stabilize.
 			control = carla.VehicleControl(0.0, 0.0, 1.0)
 			self.control = control  # Important: UKF uses self.control for prediction
 			self.pid_metadata = {}
@@ -1187,18 +1121,11 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 			)
 			if escape_tp is not None:
 				# Only override target_point_speed for model input;
-				# keep original target_point / next_target_point for BEV rendering & PID
+				# Preserve target points for BEV rendering and PID control.
 				target_point_speed = torch.cat([speed, escape_tp, escape_ntp], dim=-1)  # (1, 5)
 
-			print(build_cleaned_prompt_and_modes.__code__.co_filename)
 			prompt_cleaned, understanding_output, reasoning_output = build_cleaned_prompt_and_modes(target_point_speed)
 			t0 = time.time()
-			# if dp_vit_feat.dim() == 2:
-			# 	dp_vit_feat = dp_vit_feat.unsqueeze(0)  # (1, Nvit, C)
-			
-			# reason_feat = predicted_answer['reasoning_feat']
-			# if reason_feat.dim() == 2:
-			# 	reason_feat = reason_feat.unsqueeze(0)  # (1, Nr, C)
 			
 			# ========== Run BEV encoder backbone to get BEV features ==========
 			with torch.no_grad():
@@ -1210,8 +1137,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 					lidar_bev=bev_encoder_lidar_bev_bf16  # (1, C, H, W) on GPU, bfloat16
 				)
 			
-			# Extract BEV encoder features (following DiffusionDriveV2: only 2 features)
-			# bev_feature: (B, 1512, 8, 8) - original BEV feature
+			# Extract BEV encoder features consumed by AutoMoT.
 			bev_encoder_bev_feature = bev_encoder_output['bev_feature']  # (1, 1512, 8, 8)
 			output = self.inferencer(
 				image=rgb_pil_list,
@@ -1222,7 +1148,7 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 				reasoning_output=reasoning_output,
 				max_think_token_n=self.inference_args.max_num_tokens,
 				v_target_point=target_point_speed,
-				trans_feat=bev_encoder_bev_feature,
+				bev_encoder_feature=bev_encoder_bev_feature,
 				do_sample=False,
 				text_temperature=0.0,
 				frame_idx=self.step,
@@ -1561,12 +1487,3 @@ class MOTAgent(autonomous_agent.AutonomousAgent):
 		y = scale * EARTH_RADIUS_EQUA * math.log(math.tan((90.0 + self.lat_ref) * math.pi / 360.0)) - my
 		x = mx - scale * self.lon_ref * math.pi * EARTH_RADIUS_EQUA / 180.0
 		return np.array([x, y])
-
-
-
-
-
-
-
-
-

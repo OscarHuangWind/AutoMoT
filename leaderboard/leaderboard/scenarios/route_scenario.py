@@ -286,7 +286,6 @@ class RouteScenario(BasicScenario):
 
             # And their members of type class
             for member in inspect.getmembers(scenario_module, inspect.isclass):
-                # TODO: Filter out any class that isn't a child of BasicScenario
                 all_scenario_classes[member[0]] = member[1]
 
         return all_scenario_classes

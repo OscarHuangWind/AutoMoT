@@ -176,7 +176,7 @@ class LeaderboardEvaluator(object):
             if self.agent_instance:
                 self.agent_instance.destroy()
                 self.agent_instance = None
-        except Exception as e:
+        except Exception:
             print("\n\033[91mFailed to stop the agent:", flush=True)
             print(f"\n{traceback.format_exc()}\033[0m", flush=True)
 
@@ -223,7 +223,6 @@ class LeaderboardEvaluator(object):
                 )
         self.carla_path = carla_root
         args.port = find_free_port(args.port)
-        # cmd1 = f"{os.path.join(self.carla_path, 'CarlaUE4.sh')} -RenderOffScreen -nosound -quality-level=Low -carla-rpc-port={args.port}"
         cmd1 = f"{os.path.join(self.carla_path, 'CarlaUE4.sh')} -RenderOffScreen -nosound -carla-rpc-port={args.port}"
         self.server = subprocess.Popen(cmd1, shell=True, preexec_fn=os.setsid)
         print(cmd1, self.server.returncode, flush=True)
@@ -277,7 +276,7 @@ class LeaderboardEvaluator(object):
         # Has simulation failed?
         if self.world and self.manager and not self._client_timed_out:
             # Reset to asynchronous mode
-            self.world.tick()  # TODO: Make sure all scenario actors have been destroyed
+            self.world.tick()
             settings = self.world.get_settings()
             settings.synchronous_mode = False
             settings.fixed_delta_seconds = None
@@ -584,14 +583,5 @@ def main():
     else:
         sys.exit(0)
 
-def attach_debugger():
-    import debugpy
-    debugpy.listen(5678)
-    print("Waiting for debugger!")
-    debugpy.wait_for_client()
-    print("Attached!")
-
 if __name__ == '__main__':
-    # 26435 26393 2534 1833 1852 24258
-    # attach_debugger()  
     main()

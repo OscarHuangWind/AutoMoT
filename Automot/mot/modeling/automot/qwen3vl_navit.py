@@ -1,7 +1,6 @@
 from dataclasses import dataclass
-from functools import partial
 from typing import List, Optional, Tuple
-from typing import Any, Callable, Optional, Union
+from typing import Callable
 
 import torch
 from torch import nn
@@ -10,23 +9,12 @@ from torch.nn.attention.flex_attention import flex_attention
 from torch.nn.functional import scaled_dot_product_attention
 from transformers.utils import ModelOutput
 from transformers.models.qwen3_vl.modeling_qwen3_vl import eager_attention_forward
-from transformers.modeling_utils import ALL_ATTENTION_FUNCTIONS, PreTrainedModel
-
-from flash_attn import flash_attn_varlen_func
-from transformers import AutoTokenizer as Qwen3Tokenizer
-import sys
-# sys.path.insert(0, ...)  # Removed: use pip-installed transformers
+from transformers.modeling_utils import ALL_ATTENTION_FUNCTIONS
 
 from transformers.models.qwen3_vl.configuration_qwen3_vl import Qwen3VLTextConfig as _Qwen3VLTextConfig
-from transformers.models.qwen3_vl.configuration_qwen3_vl import (
-    Qwen3VLConfig as _Qwen3VLConfig,
-    Qwen3VLVisionConfig
-)
 from transformers.models.qwen3_vl.modeling_qwen3_vl import (
     Qwen3VLPreTrainedModel,
-    Qwen3VLVisionAttention,
     Qwen3VLTextAttention,
-    Qwen3VLVisionMLP,
     Qwen3VLTextMLP,
     Qwen3VLTextRMSNorm,
     Qwen3VLTextRotaryEmbedding,
@@ -34,7 +22,7 @@ from transformers.models.qwen3_vl.modeling_qwen3_vl import (
 )
 
 
-# Global compilation optimization (following qwen3_navit pattern)
+# Global compilation optimization for packed Qwen3VL decoding.
 torch._dynamo.config.cache_size_limit = 512
 torch._dynamo.config.accumulated_cache_size_limit = 4096
 flex_attention = torch.compile(flex_attention)
@@ -132,16 +120,15 @@ class Qwen3VLTextConfig(_Qwen3VLTextConfig):
         attention_bias=False,
         attention_dropout=0.0,
         
-        # NavIT specific parameters (following qwen3_navit pattern)
+        # NavIT packed-sequence parameters.
         qk_norm=True,
         layer_module="Qwen3VLDecoderLayer",
         freeze_und=False,
         
-        # MoT-specific parameters (configurable attention heads) - following qwen3_navit defaults
+        # MoT-specific parameters.
         mot_num_attention_heads=16,
         mot_num_key_value_heads=4,
-        # MoT-specific MLP size - following qwen3_navit default (half of regular)
-        mot_intermediate_size=11008,  # 22016 // 2, following qwen3_navit pattern of reducing MLP size
+        mot_intermediate_size=11008,
         
         **kwargs,
     ):
@@ -166,19 +153,19 @@ class Qwen3VLTextConfig(_Qwen3VLTextConfig):
             **kwargs,
         )
         
-        # NavIT specific parameters (following qwen3_navit pattern)
+        # NavIT packed-sequence parameters.
         self.qk_norm = qk_norm
         self.layer_module = layer_module
         self.freeze_und = freeze_und
         
-        # Set default MoT head counts if not specified (following qwen3_navit pattern)
+        # Set default MoT head counts if not specified.
         self.mot_num_attention_heads = mot_num_attention_heads if mot_num_attention_heads is not None else num_attention_heads // 2
         self.mot_num_key_value_heads = mot_num_key_value_heads if mot_num_key_value_heads is not None else num_key_value_heads // 2
         
-        # Set default MoT intermediate size if not specified (following qwen3_navit pattern - half of regular)
+        # Set default MoT intermediate size if not specified.
         self.mot_intermediate_size = mot_intermediate_size if mot_intermediate_size is not None else intermediate_size // 2
         
-        # Ensure MoT head configuration is valid (following qwen3_navit pattern)
+        # Ensure MoT head configuration is valid.
         assert self.mot_num_attention_heads % self.mot_num_key_value_heads == 0, \
             f"mot_num_attention_heads ({self.mot_num_attention_heads}) must be divisible by mot_num_key_value_heads ({self.mot_num_key_value_heads})"
         
@@ -188,7 +175,7 @@ class Qwen3VLTextConfig(_Qwen3VLTextConfig):
 
 class NaiveCache:
     """
-    Simple cache implementation for NavIT models following qwen3_navit pattern.
+    Simple cache implementation for packed Qwen3VL decoding.
     
     This cache stores key and value tensors for each layer to enable efficient
     inference with past key values in packed sequence processing.
@@ -246,8 +233,7 @@ class PackedAttention(Qwen3VLTextAttention):
     Qwen3VL Text Packed Attention with NavIT optimizations.
     
     This class extends Qwen3VLTextAttention to support packed sequence processing
-    for efficient batch processing of variable-length sequences. Follows the exact
-    pattern from qwen3_navit.py but adapted for Qwen3VL text components.
+    for efficient batch processing of variable-length sequences.
     
     Args:
         config: Qwen3VLTextConfig with NavIT parameters
@@ -257,13 +243,7 @@ class PackedAttention(Qwen3VLTextAttention):
     def __init__(self, config, layer_idx: Optional[int] = None):
         super().__init__(config, layer_idx)
         
-        # Note: Qwen3VLTextAttention already has q_norm and k_norm built-in
-        # Unlike qwen3_navit.py which conditionally adds them, Qwen3VL always uses QK norm
-        # So we don't need to override them here - they're inherited from parent class
-        # 
-        # Parent class already sets:
-        # self.q_norm = Qwen3VLTextRMSNorm(self.head_dim, eps=config.rms_norm_eps)
-        # self.k_norm = Qwen3VLTextRMSNorm(self.head_dim, eps=config.rms_norm_eps)
+        # Qwen3VLTextAttention already provides q_norm and k_norm.
 
     def forward(self, *args, **kwargs):
         if self.training:
@@ -356,10 +336,6 @@ class PackedAttention(Qwen3VLTextAttention):
             packed_query_states, packed_key_states, packed_cos, packed_sin, unsqueeze_dim=1
         )
 
-        # packed_query_states = packed_query_states.to(torch.bfloat16)
-        # packed_key_states = packed_key_states.to(torch.bfloat16)
-        # packed_value_states = packed_value_states.to(torch.bfloat16)
-
         if past_key_values is not None and past_key_values.key_cache[self.layer_idx] is not None:
             past_key_states = past_key_values.key_cache[self.layer_idx]
             past_value_states = past_key_values.value_cache[self.layer_idx]
@@ -377,20 +353,6 @@ class PackedAttention(Qwen3VLTextAttention):
             merged_value_states = packed_value_states
             key_values_lens = query_lens
 
-        # cu_seqlens_q = torch.nn.functional.pad(torch.cumsum(query_lens, dim=0), (1, 0))
-        # cu_seqlens_k = torch.nn.functional.pad(torch.cumsum(key_values_lens, dim=0), (1, 0))
-
-        # packed_attn_output = flash_attn_varlen_func(
-        #     q=packed_query_states,
-        #     k=merged_key_states,
-        #     v=merged_value_states,
-        #     cu_seqlens_q=cu_seqlens_q.to(torch.int32),
-        #     cu_seqlens_k=cu_seqlens_k.to(torch.int32),
-        #     max_seqlen_q=max(query_lens).item(),
-        #     max_seqlen_k=max(key_values_lens).item(),
-        #     causal=is_causal,
-        # )
-
         attention_interface: Callable = eager_attention_forward
         if self.config._attn_implementation != "eager":
             attention_interface = ALL_ATTENTION_FUNCTIONS[self.config._attn_implementation]
@@ -404,9 +366,6 @@ class PackedAttention(Qwen3VLTextAttention):
             dropout=0.0 if not self.training else self.attention_dropout,
             scaling=self.scaling,
         )
-
-        # input_shape = packed_attn_output.shape[:-1]
-        # packed_attn_output = packed_attn_output.reshape(*input_shape, -1).contiguous()
 
         packed_attn_output = packed_attn_output.reshape(-1, self.config.num_attention_heads * self.head_dim).contiguous()
         packed_attn_output = self.o_proj(packed_attn_output)
@@ -423,8 +382,7 @@ class PackedAttentionMoT(Qwen3VLTextAttention):
     Qwen3VL Text Packed Attention with MoT (Mixture of Tokens) support.
     
     This class extends PackedAttention to support MoT where different tokens
-    can use different attention head configurations. Follows the exact pattern 
-    from qwen3_navit.py but adapted for Qwen3VL text components.
+    can use different attention head configurations.
     
     Args:
         config: Qwen3VLTextConfig with NavIT and MoT parameters
@@ -619,7 +577,7 @@ class PackedAttentionMoT(Qwen3VLTextAttention):
         packed_key_value_indexes: Optional[torch.Tensor] = None,
         update_past_key_values=True,
         is_causal=True,
-        packed_vae_token_indexes=None,
+        packed_mot_token_indexes=None,
         packed_text_indexes=None,
     ):
         if mode == 'und':
@@ -629,10 +587,8 @@ class PackedAttentionMoT(Qwen3VLTextAttention):
             packed_query_states = self.q_norm(packed_query_states)
             packed_key_states = self.k_norm(packed_key_states)
         elif mode == 'gen':
-            # packed_query_sequence = packed_query_sequence.to(torch.bfloat16)
-
             packed_text_query_sequence = packed_query_sequence[packed_text_indexes]
-            packed_vae_query_sequence = packed_query_sequence[packed_vae_token_indexes]
+            packed_mot_query_sequence = packed_query_sequence[packed_mot_token_indexes]
 
             # Calculate maximum dimensions for unified tensor shape
             max_heads_q = max(self.config.num_attention_heads, self.mot_num_heads)
@@ -659,30 +615,29 @@ class PackedAttentionMoT(Qwen3VLTextAttention):
                 packed_value_states[packed_text_indexes, :self.config.num_key_value_heads, :self.head_dim] = \
                     self.v_proj(packed_text_query_sequence).view(-1, self.config.num_key_value_heads, self.head_dim)
 
-            # Apply projections and fill vae tokens
-            if len(packed_vae_token_indexes) > 0:
-                packed_query_states[packed_vae_token_indexes, :self.mot_num_heads, :self.mot_head_dim] = \
-                    self.q_proj_mot_gen(packed_vae_query_sequence).view(-1, self.mot_num_heads, self.mot_head_dim)
-                packed_key_states[packed_vae_token_indexes, :self.mot_num_key_value_heads, :self.mot_head_dim] = \
-                    self.k_proj_mot_gen(packed_vae_query_sequence).view(-1, self.mot_num_key_value_heads, self.mot_head_dim)
-                packed_value_states[packed_vae_token_indexes, :self.mot_num_key_value_heads, :self.mot_head_dim] = \
-                    self.v_proj_mot_gen(packed_vae_query_sequence).view(-1, self.mot_num_key_value_heads, self.mot_head_dim)
+            # Apply projections and fill MoT tokens
+            if len(packed_mot_token_indexes) > 0:
+                packed_query_states[packed_mot_token_indexes, :self.mot_num_heads, :self.mot_head_dim] = \
+                    self.q_proj_mot_gen(packed_mot_query_sequence).view(-1, self.mot_num_heads, self.mot_head_dim)
+                packed_key_states[packed_mot_token_indexes, :self.mot_num_key_value_heads, :self.mot_head_dim] = \
+                    self.k_proj_mot_gen(packed_mot_query_sequence).view(-1, self.mot_num_key_value_heads, self.mot_head_dim)
+                packed_value_states[packed_mot_token_indexes, :self.mot_num_key_value_heads, :self.mot_head_dim] = \
+                    self.v_proj_mot_gen(packed_mot_query_sequence).view(-1, self.mot_num_key_value_heads, self.mot_head_dim)
 
             # Apply normalization
-            # packed_query_states = packed_query_states.to(torch.float32)
             if len(packed_text_indexes) > 0:
                 packed_query_states[packed_text_indexes] = self.q_norm(packed_query_states[packed_text_indexes])
                 packed_key_states[packed_text_indexes] = self.k_norm(packed_key_states[packed_text_indexes])
-            if len(packed_vae_token_indexes) > 0:
-                packed_query_states[packed_vae_token_indexes, :self.mot_num_heads, :self.mot_head_dim] = self.q_norm_mot_gen(packed_query_states[packed_vae_token_indexes, :self.mot_num_heads, :self.mot_head_dim])
-                packed_key_states[packed_vae_token_indexes, :self.mot_num_key_value_heads, :self.mot_head_dim] = self.k_norm_mot_gen(packed_key_states[packed_vae_token_indexes, :self.mot_num_key_value_heads, :self.mot_head_dim])
+            if len(packed_mot_token_indexes) > 0:
+                packed_query_states[packed_mot_token_indexes, :self.mot_num_heads, :self.mot_head_dim] = self.q_norm_mot_gen(packed_query_states[packed_mot_token_indexes, :self.mot_num_heads, :self.mot_head_dim])
+                packed_key_states[packed_mot_token_indexes, :self.mot_num_key_value_heads, :self.mot_head_dim] = self.k_norm_mot_gen(packed_key_states[packed_mot_token_indexes, :self.mot_num_key_value_heads, :self.mot_head_dim])
 
         packed_cos, packed_sin = packed_query_position_embeddings
         packed_query_states, packed_key_states = apply_rotary_pos_emb(
             packed_query_states, packed_key_states, packed_cos, packed_sin, unsqueeze_dim=1
         )
-        if mode == 'gen' and len(packed_vae_token_indexes) > 0:
-            packed_key_states[packed_vae_token_indexes, :, self.mot_head_dim:] = 0
+        if mode == 'gen' and len(packed_mot_token_indexes) > 0:
+            packed_key_states[packed_mot_token_indexes, :, self.mot_head_dim:] = 0
         if past_key_values is not None and past_key_values.key_cache[self.layer_idx] is not None:
             past_key_states = past_key_values.key_cache[self.layer_idx]
             past_value_states = past_key_values.value_cache[self.layer_idx]
@@ -749,10 +704,10 @@ class PackedAttentionMoT(Qwen3VLTextAttention):
                 text_output = text_output.reshape(-1, self.config.num_attention_heads * self.head_dim)
                 packed_attn_output_proj[packed_text_indexes] = self.o_proj(text_output)
             
-            if len(packed_vae_token_indexes) > 0:
-                vae_output = packed_attn_output[packed_vae_token_indexes, :self.mot_num_heads, :self.mot_head_dim]
-                vae_output = vae_output.reshape(-1, self.mot_num_heads * self.mot_head_dim)
-                packed_attn_output_proj[packed_vae_token_indexes] = self.o_proj_mot_gen(vae_output)
+            if len(packed_mot_token_indexes) > 0:
+                mot_output = packed_attn_output[packed_mot_token_indexes, :self.mot_num_heads, :self.mot_head_dim]
+                mot_output = mot_output.reshape(-1, self.mot_num_heads * self.mot_head_dim)
+                packed_attn_output_proj[packed_mot_token_indexes] = self.o_proj_mot_gen(mot_output)
             
             packed_attn_output = packed_attn_output_proj
 
@@ -768,8 +723,7 @@ class Qwen3VLDecoderLayer(nn.Module):
     Qwen3VL Decoder Layer with NavIT packed sequence support.
     
     This class extends the standard Qwen3VL decoder layer to support packed sequence
-    processing for efficient batch handling. Follows the exact pattern from qwen3_navit.py
-    but adapted for Qwen3VL components.
+    processing for efficient batch handling.
     
     Args:
         config: Qwen3VLTextConfig with NavIT parameters
@@ -845,7 +799,6 @@ class Qwen3VLDecoderLayer(nn.Module):
         packed_query_sequence, past_key_values = self.self_attn(
             packed_query_sequence=packed_query_sequence,
             query_lens=query_lens,
-            #attention_mask=attention_mask,
             packed_query_position_embeddings=packed_query_position_embeddings,
             packed_query_indexes=packed_query_indexes,
             past_key_values=past_key_values,
@@ -887,7 +840,6 @@ class Qwen3VLMoTDecoderLayer(nn.Module):
     ):
         super().__init__()
         self.hidden_size = config.hidden_size
-        #self.freeze_und = config.freeze_und
         self.freeze_und = False
 
         self.self_attn = attn_module(config, layer_idx)
@@ -970,7 +922,7 @@ class Qwen3VLMoTDecoderLayer(nn.Module):
         update_past_key_values=True,
         is_causal=True,
         mode="und",
-        packed_vae_token_indexes=None,
+        packed_mot_token_indexes=None,
         packed_text_indexes=None,
     ) -> tuple[torch.Tensor, Optional[NaiveCache]]:
         """Inference forward pass with MoT token processing."""
@@ -979,10 +931,7 @@ class Qwen3VLMoTDecoderLayer(nn.Module):
         if mode == "und":
             packed_query_sequence = self.input_layernorm(packed_query_sequence)
         elif mode == "gen":
-            # packed_query_sequence_ = torch.zeros_like(packed_query_sequence)
-            # packed_query_sequence_[packed_text_indexes] = self.input_layernorm(packed_query_sequence[packed_text_indexes])
             packed_query_sequence_ = self.input_layernorm_mot_gen(packed_query_sequence)
-            #packed_query_sequence_[packed_vae_token_indexes] = self.input_layernorm_mot_gen(packed_query_sequence[packed_vae_token_indexes])
             packed_query_sequence = packed_query_sequence_
 
         # Self Attention
@@ -998,7 +947,7 @@ class Qwen3VLMoTDecoderLayer(nn.Module):
             update_past_key_values=update_past_key_values,
             is_causal=is_causal,
             mode=mode,
-            packed_vae_token_indexes=packed_vae_token_indexes,
+            packed_mot_token_indexes=packed_mot_token_indexes,
             packed_text_indexes=packed_text_indexes,
         )
         packed_query_sequence = residual + packed_query_sequence
@@ -1010,13 +959,13 @@ class Qwen3VLMoTDecoderLayer(nn.Module):
             packed_query_sequence = self.mlp(packed_query_sequence)
         elif mode == "gen":
             packed_text_query_sequence = packed_query_sequence[packed_text_indexes]
-            packed_vae_query_sequence = packed_query_sequence[packed_vae_token_indexes]
+            packed_mot_query_sequence = packed_query_sequence[packed_mot_token_indexes]
             packed_text_query_sequence = self.post_attention_layernorm(packed_text_query_sequence).to(torch.bfloat16)
-            packed_vae_query_sequence = self.post_attention_layernorm_mot_gen(packed_vae_query_sequence).to(torch.bfloat16)
+            packed_mot_query_sequence = self.post_attention_layernorm_mot_gen(packed_mot_query_sequence).to(torch.bfloat16)
 
             packed_query_sequence_ = torch.zeros_like(packed_query_sequence).to(torch.bfloat16)
             packed_query_sequence_[packed_text_indexes] = self.mlp(packed_text_query_sequence)
-            packed_query_sequence_[packed_vae_token_indexes] = self.mlp_mot_gen(packed_vae_query_sequence)
+            packed_query_sequence_[packed_mot_token_indexes] = self.mlp_mot_gen(packed_mot_query_sequence)
             packed_query_sequence = packed_query_sequence_
 
         packed_query_sequence = residual + packed_query_sequence
@@ -1024,16 +973,8 @@ class Qwen3VLMoTDecoderLayer(nn.Module):
         return packed_query_sequence, past_key_values
 
 
-# ================================================================================
-# PackedAttention completed - adapting qwen3_navit.py pattern to Qwen3VL
-# Key differences from qwen3_navit.py implementation:
-# 1. Inherits from Qwen3VLTextAttention (vs Qwen3Attention in qwen3_navit)
-# 2. QK normalization is ALWAYS enabled in Qwen3VL (vs conditional in qwen3_navit)
-# 3. No need to add q_norm/k_norm - already provided by parent class
-# 4. Parent class provides: q_proj, k_proj, v_proj, o_proj, q_norm, k_norm
-# 5. PackedAttentionMoT adds MoT-specific projections and normalization
-# 6. Qwen3VLDecoderLayer uses Qwen3VLTextMLP and Qwen3VLTextRMSNorm
-# ================================================================================
+# PackedAttentionMoT adds MoT-specific projections and normalization on top of
+# Qwen3VLTextAttention.
 
 
 class Qwen3VLTextModel(Qwen3VLPreTrainedModel):
@@ -1169,7 +1110,7 @@ class Qwen3VLTextModel(Qwen3VLPreTrainedModel):
         update_past_key_values=True,
         is_causal=True,
         mode="und",
-        packed_vae_token_indexes=None,
+        packed_mot_token_indexes=None,
         packed_text_indexes=None,
         # args for deepstack
         visual_pos_masks: Optional[torch.Tensor] = None,
@@ -1198,10 +1139,10 @@ class Qwen3VLTextModel(Qwen3VLPreTrainedModel):
         if self.use_mot:
             extra_inputs.update(mode=mode)
             if mode == 'gen':
-                assert packed_vae_token_indexes is not None
+                assert packed_mot_token_indexes is not None
                 #assert packed_text_indexes is not None
                 extra_inputs.update(
-                    packed_vae_token_indexes=packed_vae_token_indexes,
+                    packed_mot_token_indexes=packed_mot_token_indexes,
                     packed_text_indexes=packed_text_indexes,
                 )        
         for layer_idx, decoder_layer in enumerate(self.layers):
@@ -1232,7 +1173,7 @@ class Qwen3VLTextModel(Qwen3VLPreTrainedModel):
             elif mode == "gen":
                 packed_query_sequence_ = torch.zeros_like(packed_query_sequence)
                 packed_query_sequence_[packed_text_indexes] = self.norm(packed_query_sequence[packed_text_indexes])
-                packed_query_sequence_[packed_vae_token_indexes] = self.norm_mot_gen(packed_query_sequence[packed_vae_token_indexes])
+                packed_query_sequence_[packed_mot_token_indexes] = self.norm_mot_gen(packed_query_sequence[packed_mot_token_indexes])
                 packed_query_sequence = packed_query_sequence_
         else:
             packed_query_sequence = self.norm(packed_query_sequence)
@@ -1333,7 +1274,7 @@ class Qwen3VLForConditionalGenerationMoT(Qwen3VLPreTrainedModel):
         is_causal=True,
         mode="und",
         attention_mask: list=None,
-        packed_vae_token_indexes=None,
+        packed_mot_token_indexes=None,
         packed_text_indexes=None,
         # args for deepstack
         visual_pos_masks: Optional[torch.Tensor] = None,
@@ -1353,7 +1294,7 @@ class Qwen3VLForConditionalGenerationMoT(Qwen3VLPreTrainedModel):
             update_past_key_values=update_past_key_values,
             is_causal=is_causal,
             mode=mode,
-            packed_vae_token_indexes=packed_vae_token_indexes,
+            packed_mot_token_indexes=packed_mot_token_indexes,
             packed_text_indexes=packed_text_indexes,
             visual_pos_masks=visual_pos_masks,
             deepstack_visual_embeds=deepstack_visual_embeds,
@@ -1452,7 +1393,7 @@ class Qwen3VLForConditionalGenerationMoT(Qwen3VLPreTrainedModel):
                 mrope_position_deltas.append(llm_positions.max() + 1 - len(total_input_ids[i]))
                 
             mrope_position_deltas = torch.tensor(mrope_position_deltas, device=input_ids.device).unsqueeze(1)
-            ## add learnable token positions at the end
+            # Add learnable token positions at the end.
             if num_learnable_tokens > 0:
                 max_pos = position_ids.max(dim=-1).values[0]   # [B]
                 start = max_pos + 1                            # [B]
@@ -1498,7 +1439,6 @@ class Qwen3VLForConditionalGenerationMoT(Qwen3VLPreTrainedModel):
             raise ValueError("Tokenizer is required for get_rope_index")
             
         image_token_id = tokenizer.convert_tokens_to_ids('<|image_pad|>')
-        video_token_id = tokenizer.convert_tokens_to_ids('<|video_pad|>')
         vision_start_token_id = tokenizer.convert_tokens_to_ids('<|vision_start|>')
         mrope_position_deltas = []
         

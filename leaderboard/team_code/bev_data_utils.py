@@ -4,7 +4,7 @@ import numpy as np
 def lidar_to_histogram_features(lidar, config):
     """
     Convert LiDAR point cloud into 2-bin histogram over a fixed size grid.
-    Extracted from team_code_transfuser/data.py CARLA_Data.lidar_to_histogram_features.
+    Adapted from the BEV encoder LiDAR histogram preprocessing.
 
     :param lidar: (N, 3) numpy, LiDAR point cloud
     :param config: BEV encoder config (GlobalConfig)

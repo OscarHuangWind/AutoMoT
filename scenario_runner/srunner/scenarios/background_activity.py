@@ -386,7 +386,8 @@ class BackgroundBehavior(AtomicBehavior):
 
             # Searching for the junction exit
             if prev_junction and prev_junction.route_exit_index is None:
-                if not self._is_junction(next_wp) or next_wp.get_junction().id != junction_id:
+                if (not self._is_junction(next_wp)
+                        or next_wp.get_junction().id != prev_junction.junctions[-1].id):
                     prev_junction.route_exit_index = i+1
 
             # Searching for a junction
@@ -1577,7 +1578,6 @@ class BackgroundBehavior(AtomicBehavior):
 
     def _update_opposite_sources(self):
         """Checks the opposite actor sources to see if new actors have to be created"""
-        ego_speed = CarlaDataProvider.get_velocity(self._ego_actor)
         for source in self._opposite_sources:
             if not source.active:
                 continue

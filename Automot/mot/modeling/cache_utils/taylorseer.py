@@ -36,7 +36,6 @@ def taylor_formula(cache_dic: Dict, current: Dict) -> torch.Tensor:
     :param current: Information of the current step
     """
     x = current['step'] - current['activated_steps'][-1]
-    #x = current['t'] - current['activated_times'][-1]
     output = 0
 
     for i in range(len(cache_dic['cache'][-1][current['stream']][current['layer']][current['module']])):
@@ -71,7 +70,6 @@ def force_scheduler(cache_dic, current):
     # you may have a try.
 
     cache_dic['cal_threshold'] = threshold
-    #return threshold
 
 
 # Copied from https://github.com/Shenyi-Z/TaylorSeer/blob/main/TaylorSeers-xDiT/taylorseer_flux/cache_functions/cal_type.py

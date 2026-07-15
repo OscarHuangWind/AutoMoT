@@ -4,10 +4,8 @@ import argparse
 import xml.etree.ElementTree as ET
 from agents.navigation.global_route_planner import GlobalRoutePlanner
 import os
-import atexit
 import subprocess
 import time
-import random
 
 Ability = {
     "Overtaking":['Accident', 'AccidentTwoWays', 'ConstructionObstacle', 'ConstructionObstacleTwoWays', 'HazardAtSideLaneTwoWays', 'HazardAtSideLane', 'ParkedObstacleTwoWays', 'ParkedObstacle', 'VehicleOpensDoorTwoWays'],
@@ -126,10 +124,7 @@ def main(args):
             record_success_status = False
         update_Ability(scenario_name, Ability_Statistic, record_success_status)
         update_Success(scenario_name, Success_Statistic, record_success_status)
-        # if scenario_name in Ability["Traffic_Signs"] and (scenario_name in Ability["Merging"] or scenario_name in Ability["Emergency_Brake"]):
-        # Only these three 'Ability's intersect
         if scenario_name in Ability["Traffic_Signs"]:
-            # Only these three 'Ability's intersect
             if route.get('town') != current_town:
                 current_town = route.get('town')
                 print("Loading the town:", current_town)
@@ -192,4 +187,3 @@ if __name__=='__main__':
     argparser.add_argument('-p', '--port', nargs=1, default=2000, help='carla rpc port')
     args = argparser.parse_args()
     main(args)
-    

@@ -1,20 +1,11 @@
-"""
-BEV Encoder Backbone Feature Extractor
-=======================================
-
-"""
+"""BEV encoder backbone feature extractor."""
 
 import os
-import sys
 import torch
 import torch.nn as nn
 import numpy as np
 import cv2
-import laspy
-from pathlib import Path
-
-current_dir = Path(__file__).parent
-sys.path.insert(0, str(current_dir))
+from safetensors import safe_open
 
 import jsonpickle
 import jsonpickle.ext.numpy as jsonpickle_numpy
@@ -22,21 +13,15 @@ import jsonpickle.ext.numpy as jsonpickle_numpy
 jsonpickle_numpy.register_handlers()
 
 from mot.modeling.bev_encoder.config import GlobalConfig
-from mot.modeling.bev_encoder.transfuser import BEVEncoderBackbone
+from mot.modeling.bev_encoder.bev_encoder import BEVEncoderBackbone
 import mot.modeling.bev_encoder.bev_encoder_utils as t_u
 
 
 class BEVEncoderBackboneExtractor(nn.Module):
-    """
-    
-    """
+    """Load the driving backbone and expose frozen BEV feature extraction."""
     
     def __init__(self, config_path: str, model_path: str = None, device: str = 'cuda:0',
                  state_dict: dict = None):
-        """
-        
-        Args:
-        """
         super().__init__()
         
         self.device = torch.device(device)
@@ -55,7 +40,7 @@ class BEVEncoderBackboneExtractor(nn.Module):
         
         print(f"BEV Encoder Backbone initialized on {device}")
         print(f"  - Config: {config_path}")
-        print(f"  - All parameters frozen")
+        print("  - All parameters frozen")
         
     def _load_config(self, config_path: str) -> GlobalConfig:
         # Try bev_config.json first (merged config dir), fall back to config.json
@@ -68,33 +53,50 @@ class BEVEncoderBackboneExtractor(nn.Module):
         loaded_config = jsonpickle.decode(json_config)
         
         config = GlobalConfig()
-        config.__dict__.update(loaded_config.__dict__)
+        if isinstance(loaded_config, dict):
+            config.__dict__.update(loaded_config)
+        else:
+            config.__dict__.update(vars(loaded_config))
         
         return config
     
     def _load_weights(self, config_path: str, model_path: str = None, state_dict: dict = None):
         if state_dict is not None:
             print("Loading BEV encoder weights from pre-loaded state_dict.")
-            backbone_state_dict = state_dict
+            backbone_state_dict = self._extract_backbone_state_dict(state_dict)
         else:
             if model_path is None:
-                for file in os.listdir(config_path):
-                    if file.endswith('.pth') and file.startswith('model'):
-                        model_path = os.path.join(config_path, file)
-                        break
+                safetensors_path = os.path.join(config_path, 'model.safetensors')
+                if os.path.isfile(safetensors_path):
+                    model_path = safetensors_path
+                else:
+                    pth_candidates = sorted(
+                        os.path.join(config_path, file)
+                        for file in os.listdir(config_path)
+                        if file.startswith('model') and file.endswith('.pth')
+                    )
+                    if len(pth_candidates) == 1:
+                        model_path = pth_candidates[0]
+                    elif len(pth_candidates) > 1:
+                        raise ValueError(
+                            "Multiple BEV encoder checkpoints found; pass model_path explicitly"
+                        )
             
             if model_path is None:
                 raise FileNotFoundError(f"No model weights found in {config_path}")
             
             print(f"Loading weights from: {model_path}")
             
-            full_state_dict = torch.load(model_path, map_location=self.device)
-            
-            backbone_state_dict = {}
-            for key, value in full_state_dict.items():
-                if key.startswith('backbone.'):
-                    new_key = key[len('backbone.'):]
-                    backbone_state_dict[new_key] = value
+            if model_path.endswith('.safetensors'):
+                backbone_state_dict = self._load_safetensors_backbone_state_dict(model_path)
+            else:
+                full_state_dict = torch.load(model_path, map_location='cpu')
+                if isinstance(full_state_dict, dict):
+                    for key in ("state_dict", "model", "module"):
+                        if key in full_state_dict and isinstance(full_state_dict[key], dict):
+                            full_state_dict = full_state_dict[key]
+                            break
+                backbone_state_dict = self._extract_backbone_state_dict(full_state_dict)
         
         missing_keys, unexpected_keys = self.backbone.load_state_dict(backbone_state_dict, strict=False)
         
@@ -102,6 +104,44 @@ class BEVEncoderBackboneExtractor(nn.Module):
             print(f"Warning: Missing keys: {missing_keys}")
         if unexpected_keys:
             print(f"Warning: Unexpected keys: {unexpected_keys}")
+
+    @staticmethod
+    def _extract_backbone_state_dict(full_state_dict):
+        backbone_state_dict = {}
+        has_prefixed_keys = any(
+            key.startswith('bev_encoder.') or key.startswith('backbone.')
+            for key in full_state_dict
+        )
+        for key, value in full_state_dict.items():
+            if key.startswith('bev_encoder.'):
+                backbone_state_dict[key[len('bev_encoder.'):]] = value
+            elif key.startswith('backbone.'):
+                backbone_state_dict[key[len('backbone.'):]] = value
+            elif not has_prefixed_keys:
+                backbone_state_dict[key] = value
+        if not backbone_state_dict:
+            raise KeyError("No BEV encoder weights found in checkpoint state dict")
+        return backbone_state_dict
+
+    @staticmethod
+    def _load_safetensors_backbone_state_dict(model_path):
+        with safe_open(model_path, framework='pt', device='cpu') as handle:
+            keys = list(handle.keys())
+            has_prefixed_keys = any(
+                key.startswith('bev_encoder.') or key.startswith('backbone.')
+                for key in keys
+            )
+            backbone_state_dict = {}
+            for key in keys:
+                if key.startswith('bev_encoder.'):
+                    backbone_state_dict[key[len('bev_encoder.'):]] = handle.get_tensor(key)
+                elif key.startswith('backbone.'):
+                    backbone_state_dict[key[len('backbone.'):]] = handle.get_tensor(key)
+                elif not has_prefixed_keys:
+                    backbone_state_dict[key] = handle.get_tensor(key)
+        if not backbone_state_dict:
+            raise KeyError(f"No BEV encoder weights found in {model_path}")
+        return backbone_state_dict
             
     def _freeze_parameters(self):
         for param in self.backbone.parameters():
@@ -227,6 +267,8 @@ class BEVEncoderBackboneExtractor(nn.Module):
             
         Returns:
         """
+        import laspy
+
         las_object = laspy.read(lidar_path)
         lidar = las_object.xyz
         
@@ -279,54 +321,3 @@ class BEVEncoderBackboneExtractor(nn.Module):
         lidar_bev = self.preprocess_lidar(lidar_path)
         
         return self.forward(rgb, lidar_bev)
-
-
-def test_extractor():
-    """
-    """
-    print("=" * 60)
-    print("TransFuser Backbone Extractor - Dummy Test")
-    print("=" * 60)
-    
-    config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "checkpoints", "transfuser", "all_towns")
-    
-    extractor = BEVEncoderBackboneExtractor(config_path=config_path, device='cuda:0')
-    
-    print("\nCreating dummy inputs...")
-    batch_size = 1
-    
-    rgb_height = extractor.config.cropped_height if extractor.config.crop_image else extractor.config.camera_height
-    rgb_width = extractor.config.cropped_width if extractor.config.crop_image else extractor.config.camera_width
-    dummy_rgb = torch.randn(batch_size, 3, rgb_height, rgb_width) * 255
-    dummy_rgb = dummy_rgb.clamp(0, 255)
-    
-    # LiDAR BEV: [B, C, H, W]
-    lidar_channels = 2 if extractor.config.use_ground_plane else 1
-    lidar_channels *= extractor.config.lidar_seq_len
-    dummy_lidar = torch.randn(batch_size, lidar_channels, 
-                              extractor.config.lidar_resolution_height,
-                              extractor.config.lidar_resolution_width)
-    
-    print(f"  RGB shape: {dummy_rgb.shape}")
-    print(f"  LiDAR BEV shape: {dummy_lidar.shape}")
-    
-    print("\nRunning forward pass...")
-    with torch.no_grad():
-        output = extractor(dummy_rgb, dummy_lidar)
-    
-    print("\nOutput shapes:")
-    for key, value in output.items():
-        if value is not None:
-            print(f"  {key}: {value.shape}")
-        else:
-            print(f"  {key}: None")
-    
-    print("\n" + "=" * 60)
-    print("Dummy test completed successfully!")
-    print("=" * 60)
-    
-    return extractor, output
-
-
-if __name__ == "__main__":
-    test_extractor()

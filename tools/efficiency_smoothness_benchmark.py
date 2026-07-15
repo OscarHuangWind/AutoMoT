@@ -1,5 +1,4 @@
 from scipy.signal import savgol_filter
-# import numpy.typing as npt
 import numpy as np
 import json
 import re
@@ -24,10 +23,6 @@ max_abs_lon_jerk = 4.13  # [m/s^3]
 
 # (6) ego_yaw_rate_metric
 max_abs_yaw_rate = 0.95  # [rad/s]
-
-'''
-window size = 8
-'''
 
 def chunk_arrays(arrays, m):
     chunks = [chunk_array(arr, m) for arr in arrays]

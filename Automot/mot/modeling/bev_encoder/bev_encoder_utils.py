@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from torch import nn
 import cv2
 from collections import deque
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Polygon
 import shapely
 import itertools
 from copy import deepcopy
@@ -584,7 +584,6 @@ def convert_depth(data):
 
   normalized = np.dot(data, [65536.0, 256.0, 1.0])
   normalized /= (256 * 256 * 256 - 1)
-  # in_meters = 1000 * normalized
   # clip to 50 meters
   normalized = np.clip(normalized, a_min=0.0, a_max=0.05)
   normalized = normalized * 20.0  # Rescale map to lie in [0,1]
@@ -780,7 +779,7 @@ def circle_line_segment_intersection(circle_center, circle_radius, pt1, pt2, ful
   """
 
   if np.linalg.norm(pt1 - pt2) < 0.000000001:
-    print('Problem')
+    return []
 
   (p1x, p1y), (p2x, p2y), (cx, cy) = pt1, pt2, circle_center
   (x1, y1), (x2, y2) = (p1x - cx, p1y - cy), (p2x - cx, p2y - cy)
@@ -806,18 +805,17 @@ def circle_line_segment_intersection(circle_center, circle_radius, pt1, pt2, ful
       return intersections
 
 
-def crop_array(config, images_i):  # images_i must have dimensions (H,W,C) or (H,W)
+def crop_array(config, images_i):
   """
-  Crop rgb images to the desired height and width
+  Crop images with shape (H, W, C) or (H, W) to the configured size.
   """
   if config.crop_image:
-    # crops rgb/depth/semantics from the bottom to cropped_height and symetrically from both sides to cropped_width
     assert config.cropped_height <= images_i.shape[0]
     assert config.cropped_width <= images_i.shape[1]
     side_crop_amount = (images_i.shape[1] - config.cropped_width) // 2
-    if len(images_i.shape) > 2:  # for rgb, we have 3 channels
+    if len(images_i.shape) > 2:
       return images_i[0:config.cropped_height, side_crop_amount:images_i.shape[1] - side_crop_amount, :]
-    else:  # for depth and semantics, there is no channel dimension
+    else:
       return images_i[0:config.cropped_height, side_crop_amount:images_i.shape[1] - side_crop_amount]
   else:
     return images_i

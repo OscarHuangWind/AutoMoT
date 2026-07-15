@@ -36,7 +36,7 @@ def get_entry_point():
 class HumanInterface(object):
 
     """
-    Class to control a vehicle manually for debugging purposes
+    Class to control a vehicle manually
     """
 
     def __init__(self, width, height, side_scale, left_mirror=False, right_mirror=False):

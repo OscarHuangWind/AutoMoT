@@ -62,8 +62,7 @@ class ROSLauncher(object):
     def __init__(self, app_name, ros_version, debug=False):
         self.app_name = app_name
         self.ros_version = ros_version
-        # force always debugging
-        self.debug = True
+        self.debug = debug
 
         self._process = None
 
@@ -87,7 +86,7 @@ class ROSLauncher(object):
         while True:
             try:
                 self._process.expect([pexpect.TIMEOUT], timeout=0.1)
-            except pexpect.exceptions.EOF as e:
+            except pexpect.exceptions.EOF:
                 break
 
     def is_alive(self):

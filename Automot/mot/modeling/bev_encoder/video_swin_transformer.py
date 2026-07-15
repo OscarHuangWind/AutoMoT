@@ -9,7 +9,7 @@ from torch import nn
 from torch.utils import checkpoint
 import numpy as np
 from timm.layers import DropPath, trunc_normal_
-import bev_encoder_utils as t_u
+from mot.modeling.bev_encoder import bev_encoder_utils as t_u
 
 from functools import reduce, lru_cache
 from operator import mul

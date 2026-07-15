@@ -2,7 +2,7 @@
 
 from torch import nn
 from torchvision.models.video import r2plus1d_18
-import bev_encoder_utils as t_u
+from mot.modeling.bev_encoder import bev_encoder_utils as t_u
 
 
 class VideoResNet(nn.Module):

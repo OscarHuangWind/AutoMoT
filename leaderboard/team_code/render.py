@@ -6,7 +6,6 @@ reweight_array = np.array([1.0, 3.5, 3.5, 2.0, 3.5, 2.0, 8.0])
 
 
 def add_rect(img, loc, ori, box, value, pixels_per_meter, max_distance, color):
-    img_size = max_distance * pixels_per_meter * 2
     vet_ori = np.array([-ori[1], ori[0]])
     hor_offset = box[0] * ori
     vet_offset = box[1] * vet_ori
@@ -105,7 +104,7 @@ def render(det_data, pixels_per_meter=5, max_distance=18, t=0):
         if box[0] < 1.5:
             box = box * 2
         color = np.array([1, 1, 1])
-        new_img = add_rect(
+        add_rect(
             act_img, loc, ori, box, 255, pixels_per_meter, max_distance, color
         )
         act_img = np.clip(act_img, 0, 255)
@@ -131,8 +130,6 @@ def render_waypoints(waypoints, pixels_per_meter=5, max_distance=18, color=(0, 2
             img = cv2.circle(img, new_loc, 6, color, -1)
         else:
             img = cv2.circle(img, new_loc, 6, (255, 0, 0), -1)
-
-        # img = cv2.circle(img, new_loc, 6, color, -1)
 
     img = np.clip(img, 0, 255)
     img = img.astype(np.uint8)

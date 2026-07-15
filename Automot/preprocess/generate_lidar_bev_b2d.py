@@ -8,7 +8,6 @@ import gzip
 from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from time import sleep
 import laspy
 
 BOUNDARY = {
@@ -42,7 +41,6 @@ def removePoints(PointCloud, BoundaryCond):
 
     center_mask = (np.abs(PointCloud[:, 0]) < center_boundary_x) & (np.abs(PointCloud[:, 1]) < center_boundary_y)
     PointCloud = PointCloud[valid_mask & (~center_mask)]
-    # PointCloud = PointCloud[valid_mask]
 
     PointCloud[:, 2] = PointCloud[:, 2] - minZ
     return PointCloud
@@ -275,13 +273,6 @@ def load_measurement_data(measurement_file):
         print(f"Error loading measurement file {measurement_file}: {e}")
         return None
 
-def attach_debugger():
-    import debugpy
-    debugpy.listen(5678)
-    print("Waiting for debugger!")
-    debugpy.wait_for_client()
-    print("Attached!")
-
 def process_all_scenes_pdm_lite(dataset_root, output_dir, process_all=False, scenario_filter=None, save_in_place=False, img_size=448):
     """
     Process all scenes in PDM Lite dataset to generate BEV images.
@@ -290,7 +281,7 @@ def process_all_scenes_pdm_lite(dataset_root, output_dir, process_all=False, sce
     Args:
         dataset_root: Path to the PDM Lite dataset root (e.g., /path/to/PDM_Lite)
         output_dir: Path to the output directory for BEV images (only used if save_in_place=False)
-        process_all: If False, only process the first scenario (for debugging)
+        process_all: If False, only process the first scenario for a quick check
         scenario_filter: List of scenario names to process (e.g., ['Accident', 'ControlLoss'])
         save_in_place: If True, save BEV images in the same directory structure as lidar files
         img_size: BEV image size (height and width)
@@ -322,7 +313,7 @@ def process_all_scenes_pdm_lite(dataset_root, output_dir, process_all=False, sce
                         all_scenes.extend(repetition_folders)
     else:
         # Try Structure 2: <dataset_root>/<ScenarioName>/lidar/ or <dataset_root>/<ScenarioName>/<RouteFolder>/lidar/
-        print(f"No Town folders found, trying Structure 2: <ScenarioName>/lidar/ or <ScenarioName>/<RouteFolder>/lidar/...")
+        print("No Town folders found, trying Structure 2: <ScenarioName>/lidar/ or <ScenarioName>/<RouteFolder>/lidar/...")
         scenario_folders = [d for d in glob.glob(os.path.join(dataset_root, '*')) if os.path.isdir(d)]
         
         # Filter out processed_data and other non-scenario folders
@@ -346,10 +337,10 @@ def process_all_scenes_pdm_lite(dataset_root, output_dir, process_all=False, sce
     
     if not all_scenes:
         print(f"Error: No valid scenes found in {dataset_root}.")
-        print(f"Tried Structure 1: <dataset_root>/TownXX/data/<RouteName>/<Repetition>/lidar/")
-        print(f"Tried Structure 2: <dataset_root>/<ScenarioName>/lidar/")
-        print(f"Tried Structure 3: <dataset_root>/<ScenarioName>/<RouteFolder>/lidar/")
-        print(f"\nPlease check your directory structure.")
+        print("Tried Structure 1: <dataset_root>/TownXX/data/<RouteName>/<Repetition>/lidar/")
+        print("Tried Structure 2: <dataset_root>/<ScenarioName>/lidar/")
+        print("Tried Structure 3: <dataset_root>/<ScenarioName>/<RouteFolder>/lidar/")
+        print("\nPlease check your directory structure.")
         return
     
     total_scenes_to_process = len(all_scenes)
@@ -358,7 +349,7 @@ def process_all_scenes_pdm_lite(dataset_root, output_dir, process_all=False, sce
     
     print(f"Found {total_scenes_to_process} scenes to process.")
     if save_in_place:
-        print(f"BEV images will be saved in original dataset structure (in a 'lidar_bev' directory).")
+        print("BEV images will be saved in original dataset structure (in a 'lidar_bev' directory).")
     else:
         print(f"BEV images will be saved to: {output_dir}")
     
@@ -373,14 +364,14 @@ def process_all_scenes_pdm_lite(dataset_root, output_dir, process_all=False, sce
         lidar_dir = os.path.join(scene_path, 'lidar')
         
         if not os.path.exists(lidar_dir):
-            print(f"    ⚠ Warning: No 'lidar' directory found in {scene_path}, skipping scene.")
+            print(f"    Warning: No 'lidar' directory found in {scene_path}, skipping scene.")
             continue
         
         # Get file lists
         lidar_files = sorted(glob.glob(os.path.join(lidar_dir, '*.laz')))
         
         if not lidar_files:
-            print(f"    ⚠ Warning: No .laz lidar files found in {lidar_dir}, skipping scene.")
+            print(f"    Warning: No .laz lidar files found in {lidar_dir}, skipping scene.")
             continue
         
         # Create output directories
@@ -396,12 +387,12 @@ def process_all_scenes_pdm_lite(dataset_root, output_dir, process_all=False, sce
         # Check if BEV images are already generated
         existing_bev_files = glob.glob(os.path.join(bev_image_dir, '*.png'))
         if len(existing_bev_files) == len(lidar_files):
-            print(f"    ✓ Scene already processed: {len(existing_bev_files)} BEV images found. Skipping...")
+            print(f"    Scene already processed: {len(existing_bev_files)} BEV images found. Skipping...")
             processed_scenes_count += 1
             total_frames += len(existing_bev_files)
             continue
         elif len(existing_bev_files) > 0:
-            print(f"    ⚠ Partial completion detected: {len(existing_bev_files)}/{len(lidar_files)} BEV images found. Resuming...")
+            print(f"    Partial completion detected: {len(existing_bev_files)}/{len(lidar_files)} BEV images found. Resuming...")
         
         print(f"    Found {len(lidar_files)} lidar files. Outputting to: {bev_image_dir}")
         
@@ -446,9 +437,9 @@ def process_all_scenes_pdm_lite(dataset_root, output_dir, process_all=False, sce
         total_frames += scene_frame_count
         processed_scenes_count += 1
         if skipped_frames > 0:
-            print(f"\n    ✓ Completed scene: {scene_frame_count} frames total ({scene_frame_count - skipped_frames} generated, {skipped_frames} skipped).")
+            print(f"\n    Completed scene: {scene_frame_count} frames total ({scene_frame_count - skipped_frames} generated, {skipped_frames} skipped).")
         else:
-            print(f"\n    ✓ Completed scene: {scene_frame_count} frames processed.")
+            print(f"\n    Completed scene: {scene_frame_count} frames processed.")
         
         # Break after first scene if not processing all
         if not process_all:
@@ -456,12 +447,12 @@ def process_all_scenes_pdm_lite(dataset_root, output_dir, process_all=False, sce
             break
     
     print(f"\n{'='*70}")
-    print(f"=== Processing Complete ===")
+    print("=== Processing Complete ===")
     print(f"{'='*70}")
     print(f"Total scenes processed: {processed_scenes_count}/{total_scenes_to_process}")
     print(f"Total frames generated: {total_frames}")
     if save_in_place:
-        print(f"BEV images saved in original dataset structure ('lidar_bev' directories).")
+        print("BEV images saved in original dataset structure ('lidar_bev' directories).")
     else:
         print(f"Output directory: {output_dir}")
     print(f"{'='*70}\n")
@@ -479,19 +470,13 @@ if __name__ == "__main__":
     parser.add_argument('--save_in_place', action='store_true', default=True,
                        help='Save BEV images in the original dataset structure (creates lidar_bev folder alongside lidar folder)')
     parser.add_argument('--process_all', action='store_true', default=True,
-                       help='Process all scenarios and scenes (default: only first scenario/scene for testing)')
+                       help='Process all scenarios and scenes')
     parser.add_argument('--scenarios', type=str, nargs='+',
                        help='Specific scenario names to process (e.g., Accident ControlLoss)')
-    parser.add_argument('--debug', action='store_true', 
-                       help='Enable debugger')
     parser.add_argument('--img_size', type=int, default=448,
                        help='BEV image size (height and width)')
     
     args = parser.parse_args()
-    
-    # Enable debugger if requested
-    if args.debug:
-        attach_debugger()
     
     # Check if input directory exists
     if not os.path.exists(args.input_dir):
@@ -503,11 +488,11 @@ if __name__ == "__main__":
         os.makedirs(args.output_dir, exist_ok=True)
     
     print(f"\n{'='*70}")
-    print(f"PDM Lite BEV Image Generation")
+    print("PDM Lite BEV Image Generation")
     print(f"{'='*70}")
     print(f"Input directory: {args.input_dir}")
     if args.save_in_place:
-        print(f"Save mode: In-place (lidar_bev folders in original structure)")
+        print("Save mode: In-place (lidar_bev folders in original structure)")
     else:
         print(f"Output directory: {args.output_dir}")
     print(f"Process all: {args.process_all}")

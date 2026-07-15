@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import math
+from pathlib import Path
 
 WINDOW_HEIGHT = 900
 WINDOW_WIDTH = 1600
@@ -13,23 +14,16 @@ DIS_LIGHT_SAVE = 100
 edges = [[0,1], [1,3], [3,2], [2,0], [0,4], [4,5], [5,1], [5,7], [7,6], [6,4], [6,2], [7,3]]
 
 def get_image_point(loc, K, w2c):
-    # Calculate 2D projection of 3D coordinate
-
-    # Format the input coordinate (loc is a carla.Position object)
     point = np.array([loc[0], loc[1], loc[2], 1])
-    # transform to camera coordinates
     point_camera = np.dot(w2c, point)
 
-    # New we must change from UE4's coordinate system to an "standard"
+    # Convert from UE4 coordinates to the camera coordinate convention:
     # (x, y ,z) -> (y, -z, x)
-    # and we remove the fourth componebonent also
     point_camera = [point_camera[1], -point_camera[2], point_camera[0]]
 
     depth = point_camera[2]
 
-    # now project 3D->2D using the camera matrix
     point_img = np.dot(K, point_camera)
-    # normalize
     point_img[0] /= point_img[2]
     point_img[1] /= point_img[2]
     
@@ -42,13 +36,9 @@ def point_in_canvas_wh(pos):
     return False
 
 def get_forward_vector(yaw):
-    # Convert the yaw angle from degrees to radians
     yaw_rad = math.radians(yaw)
-    # Calculate the X and Y components of the forward vector (in a left-handed coordinate system with Z-axis upwards)
-    # Note: In a left-handed coordinate system, the positive Y direction could correspond to either forward or backward, depending on the specific application scenario
     x = math.cos(yaw_rad)
     y = math.sin(yaw_rad)
-    # On a horizontal plane, the Z component of the forward vector is 0
     z = 0
     return np.array([x, y, z])
 
@@ -117,7 +107,8 @@ def vector_angle(v1, v2):
 
 def get_weather_id(weather_conditions):
     from xml.etree import ElementTree as ET
-    tree = ET.parse('./leaderboard/data/weather.xml')
+    repo_root = Path(__file__).resolve().parents[1]
+    tree = ET.parse(repo_root / 'leaderboard' / 'data' / 'weather.xml')
     root = tree.getroot()
     def conditions_match(weather, conditions):
         for (key, value) in weather:
@@ -179,21 +170,15 @@ def normalize_angle(x):
     return x
 
 def build_skeleton(ped, sk_links):
-    ######## get the pedestrian skeleton #########
     bones = ped.get_bones()
 
-    # list where we will store the lines we will project
-    # onto the camera output
     lines_3d = []
 
-    # cycle through the bone pairs in skeleton.txt and retrieve the joint positions
     for link in sk_links[1:]:
 
-        # get the roots of the two bones to be joined
         bone_transform_1 = next(filter(lambda b: b.name == link[0], bones.bone_transforms), None)
         bone_transform_2 = next(filter(lambda b: b.name == link[1], bones.bone_transforms), None)
 
-        # some bone names aren't matched
         if bone_transform_1 is not None and bone_transform_2 is not None:
             lines_3d.append([(bone_transform_1.world.location.x, bone_transform_1.world.location.y, bone_transform_1.world.location.z), 
                              (bone_transform_2.world.location.x, bone_transform_2.world.location.y, bone_transform_2.world.location.z)]

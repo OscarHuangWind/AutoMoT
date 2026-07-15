@@ -9,10 +9,6 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import carla
 import warnings
-from enum import IntEnum
-from scipy.interpolate import interp1d
-import time
-from scipy.spatial import cKDTree
 
 from agents.navigation.global_route_planner import GlobalRoutePlanner
 from agents.navigation.local_planner import RoadOption
@@ -72,26 +68,8 @@ class LateralPIDController(object):
         self._window = []
 
     def step(self, route_np, current_speed):
-        # current_speed = current_speed*3.6
-
-        # org not sure where this comes from
-        # if self.inference_mode:  # Transfuser predicts checkpoints 1m apart, whereas in the expert the route points have distance 10cm.
-        #     # n_lookahead = np.clip(self.speed_scale * current_speed + self.speed_offset, 24, 105) / 10 # range [2.4, 10.5]
-        #     # n_lookahead = n_lookahead - 2
-        #     # n_lookahead = int(min(n_lookahead, route_np.shape[0] - 1))  # range [2, 9] - but 0 and 1 are never used because n_lookahead is overwritten below
-        #     n_lookahead = np.clip(self.speed_scale * current_speed + self.speed_offset, 24, 190) / 10 # range [2.4, 10.5]
-        #     if current_speed < 10*3.6:
-        #         n_lookahead = n_lookahead - 2
-        #     elif current_speed > 18*3.6:
-        #         n_lookahead = n_lookahead + 3
-        #     n_lookahead = int(min(n_lookahead, route_np.shape[0] - 1))  # range [2, 9] - but 0 and 1 are never used because n_lookahead is overwritten below
-            
-        # else:
-        #     n_lookahead = int(min(np.clip(self.speed_scale * current_speed + self.speed_offset, 24, 105), route_np.shape[0] - 1))
-
-        # used at leaderboard
         current_speed = current_speed*3.6
-        if self.inference_mode:  # Transfuser predicts checkpoints 1m apart, whereas in the expert the route points have distance 10cm.
+        if self.inference_mode:  # The model predicts checkpoints 1 m apart; expert route points are 10 cm apart.
             n_lookahead = np.clip(self.speed_scale * current_speed + self.speed_offset, self.default_lookahead, 105) / 10 # range [2.4, 10.5]
             n_lookahead = n_lookahead - 2
             n_lookahead = int(min(n_lookahead, route_np.shape[0] - 1))  # range [2, 9] - but 0 and 1 are never used because n_lookahead is overwritten below
@@ -167,9 +145,7 @@ class RoutePlanner(object):
     def __init__(self, min_distance, max_distance, lat_ref=0.0, lon_ref=0.0):
         self.saved_route = deque()
         self.route = deque()
-        ### Oscar: fixing the route planner's bug
         self.lane_info = deque()
-        ##################################
 
         self.saved_route_distances = deque()
         self.route_distances = deque()
@@ -181,20 +157,12 @@ class RoutePlanner(object):
         self.max_distance = max_distance
         self.is_last = False
 
-        # self.mean = np.array([0.0, 0.0, 0.0])
-        # self.scale = np.array([111319.49082349832, 111319.49079327358, 1.0]) # previously: [111324.60662786, 111319.490945]
-
     def convert_gps_to_carla(self, gps):
         """
         Converts GPS signal into the CARLA coordinate frame
         :param gps: gps from gnss sensor
         :return: gps as numpy array in CARLA coordinates
         """
-        #   gps = (gps - self.mean) * self.scale
-        #   # GPS uses a different coordinate system than CARLA.
-        #   # This converts from GPS -> CARLA (90° rotation)
-        #   gps = np.array([gps[1], -gps[0], gps[2]])
-
         EARTH_RADIUS_EQUA = 6378137.0  # Constant from CARLA leaderboard GPS simulation
         lat, lon, _ = gps
         scale = math.cos(self.lat_ref * math.pi / 180.0)
@@ -217,7 +185,6 @@ class RoutePlanner(object):
             else:
                 # important to use the z variable, otherwise there are some rare bugs at carla.map.get_waypoint(carla.Location)
                 pos = np.array([pos.location.x, pos.location.y, pos.location.z])
-                # pos -= self.mean
 
             self.route.append((pos, cmd))
 
@@ -255,11 +222,9 @@ class RoutePlanner(object):
             diff = self.route[i][0] - gps
             distance = (diff[0]**2 + diff[1]**2)**0.5
 
-            ### Oscar: this is for teporarily fixing the bug of the route planner ###
             if (self.route[i][1] == RoadOption.CHANGELANELEFT or\
                 self.route[i][1] == RoadOption.CHANGELANERIGHT) and \
                 self.route_distances[min(i+1, len(self.route_distances))] < self.min_distance:
-                # self.route[i-1][1] == RoadOption.LANEFOLLOW:
                 if farthest_in_range < distance <= self.min_distance * 2:
                     farthest_in_range = distance
                     to_pop = i
@@ -283,7 +248,7 @@ class RoutePlanner(object):
 
     def save(self):
         # because self.route saves objects of traffic lights and traffic signs a deep copy is not possible
-        self.saved_route = [] # deepcopy(self.route)
+        self.saved_route = []
         for (loc, cmd, d_traffic, traffic, d_stop, stop, speed_limit, corrected_speed_limit) in self.route:
             self.saved_route.append((np.copy(loc), cmd, d_traffic, traffic, d_stop, stop, speed_limit, corrected_speed_limit))
 
@@ -328,7 +293,6 @@ def interpolate_trajectory(world_map, waypoints_trajectory, hop_resolution=1.0, 
             if len(interpolated_trace) > max_len:
                 waypoints_trajectory[i + 1] = waypoints_trajectory[i]
             else:
-                # interpolated_trace = grp.trace_route(waypoint, waypoint_next)
                 for wp, connection in interpolated_trace:
                     route.append((wp.transform, connection))
                     gps_coord = _location_to_gps(lat_ref, lon_ref, wp.transform.location)

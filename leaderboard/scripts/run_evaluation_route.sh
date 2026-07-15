@@ -1,15 +1,8 @@
 #!/bin/bash
-# ============================================================
-# Bench2Drive Route-by-Route Evaluation Script
-# Runs evaluation for all 220 routes one by one, skipping already completed ones.
-# ============================================================
-
-# Auto-detect paths from script location
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LEADERBOARD_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PROJECT_ROOT="$(cd "${LEADERBOARD_DIR}/.." && pwd)"
 
-# Auto-detect CARLA_ROOT if not set
 if [ -z "${CARLA_ROOT}" ]; then
     if [ -d "$(dirname "${PROJECT_ROOT}")/carla" ]; then
         export CARLA_ROOT="$(dirname "${PROJECT_ROOT}")/carla"
@@ -23,27 +16,25 @@ if [ -z "${CARLA_ROOT}" ]; then
     echo "Auto-detected CARLA_ROOT=${CARLA_ROOT}"
 fi
 
-BASE_PORT=2000
-BASE_TM_PORT=2001
-IS_BENCH2DRIVE=True
+BASE_PORT="${BASE_PORT:-2000}"
+BASE_TM_PORT="${BASE_TM_PORT:-2001}"
+IS_BENCH2DRIVE="${IS_BENCH2DRIVE:-True}"
 BASE_ROUTES=${LEADERBOARD_DIR}/data/bench2drive220
 TEAM_AGENT=leaderboard/team_code/mot_b2d_agent.py
-TEAM_CONFIG=${PROJECT_ROOT}/MoT-DP/checkpoints/carla_dit_best/carla_policy_best
-BASE_CHECKPOINT_ENDPOINT=eval
-SAVE_PATH=./eval_v1/
-PLANNER_TYPE=only_traj
-GPU_RANK=0
+TEAM_CONFIG="${TEAM_CONFIG:-${AUTOMOT_MODEL_PATH:-${PROJECT_ROOT}/Automot/checkpoints}}"
+BASE_CHECKPOINT_ENDPOINT="${BASE_CHECKPOINT_ENDPOINT:-eval}"
+SAVE_PATH="${SAVE_PATH:-./eval_v1/}"
+PLANNER_TYPE="${PLANNER_TYPE:-only_traj}"
+GPU_RANK="${GPU_RANK:-0}"
 
-EVAL_OUTPUT_DIR="${SCRIPT_DIR}/v_2json_open"
+EVAL_OUTPUT_DIR="${EVAL_OUTPUT_DIR:-${SCRIPT_DIR}/v_2json_open}"
 mkdir -p "$EVAL_OUTPUT_DIR"
-# export USE_EMA_WEIGHTS=1  # Disabled: EMA weights cause decoding crash (empty answer_ids)
 EVAL_JSON_DIR="${PROJECT_ROOT}/eval_json"
 SPLIT_FILE_1="${EVAL_JSON_DIR}/b2d_all_routes_split1.json"
 SPLIT_FILE_2="${EVAL_JSON_DIR}/b2d_all_routes_split2.json"
 MERGED_FILE="${EVAL_JSON_DIR}/b2d_all_routes_merged.json"
 TM_SEED="${TM_SEED:-3407}"
 
-# Check split files exist
 if [ ! -f "$SPLIT_FILE_1" ] || [ ! -f "$SPLIT_FILE_2" ]; then
     echo "Error: split files not found:"
     echo "  - $SPLIT_FILE_1"
@@ -51,7 +42,6 @@ if [ ! -f "$SPLIT_FILE_1" ] || [ ! -f "$SPLIT_FILE_2" ]; then
     exit 1
 fi
 
-# Merge split files
 python3 - "$SPLIT_FILE_1" "$SPLIT_FILE_2" "$MERGED_FILE" << 'PY'
 import json, sys
 path1, path2, out_path = sys.argv[1:4]
@@ -71,7 +61,6 @@ with open(out_path, 'w') as f:
 print(f"Merged {len(ids)} route ids -> {out_path}")
 PY
 
-# Extract route IDs
 mapfile -t ROUTE_IDS < <(python3 - "$MERGED_FILE" << 'PY'
 import json, sys
 path = sys.argv[1]
@@ -127,7 +116,6 @@ for ROUTE_ID in "${ROUTE_IDS[@]}"; do
         FAILED_ROUTES+=("$ROUTE_ID")
     fi
     
-    # Copy eval.json to target directory (same as original project)
     if [ -f "$CHECKPOINT_ENDPOINT" ]; then
         NEW_NAME="${EVAL_OUTPUT_DIR}/eval_${ROUTE_ID}.json"
         cp "$CHECKPOINT_ENDPOINT" "$NEW_NAME"

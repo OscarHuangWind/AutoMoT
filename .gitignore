@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Model weights and checkpoints (large files, download separately)
+Automot/checkpoints/
+checkpoints/
+results/
+wandb/
+.hf/
+
+# Training artifacts
+*.pt
+*.pth
+*.safetensors
+*.jsonl
+Automot/env.sh
+Automot/data/pdm_lite_jsonl/
+
+# Cache
+.cache/
+*.cache
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Local evaluation artifacts
+eval.json
+eval_goal_oriented.json
+eval_goal_oriented_1text.json
+eval_v*/
+leaderboard/scripts/v_2json*/
+leaderboard/scripts/eval.json
+leaderboard/scripts/eval_run.log
